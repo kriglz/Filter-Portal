@@ -15,7 +15,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    
+    private let portalNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
+    private let portalSize: CGSize = CGSize(width: 0.5, height: 1)
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -134,6 +135,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+//        print(frame.camera.transform) //intrinsics)
+//        print(sceneView.pointOfView?.position)
+//        print(cubeNode.position, "cube")
+        
+        if let camera = sceneView.pointOfView {
+            let deltaX = camera.position.x - portalNode.position.x
+            let deltaY = camera.position.y - portalNode.position.y
+            let deltaZ = camera.position.z - portalNode.position.z
+            print(deltaX, deltaY, deltaZ)
+
+        }
+    }
+    
     // MARK: - ARSessionObserver
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -192,15 +207,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
     
-    
     @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
         let touchPoint = byReactingTo.location(in: self.view)
-        
-        let cubeNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
-        cubeNode.position = SCNVector3(0, 0, -0.2) // SceneKit/AR coordinates are in meters
-        cubeNode.name = "cube"
-        
-        addToPlane(item: cubeNode, atPoint: touchPoint)
+        let portal = spawnPortal()
+        addToPlane(item: portal, atPoint: touchPoint)
+    }
+    
+    private func spawnPortal() -> SCNNode{
+        let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.white
+        portalPlane.materials = [material]
+        let portal = SCNNode(geometry: portalPlane)
+        portal.name = "portal"
+        return portal
     }
     
     func addToPlane(item: SCNNode, atPoint point: CGPoint) {
@@ -208,9 +228,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if hits.count > 0, let firstHit = hits.first {
                 let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
                 item.position = hitPosition
+                item.position.y += Float(portalSize.height / 2.0)
             
             for child in sceneView.scene.rootNode.childNodes {
-                if child.name == "cube" {
+                if child.name == "portal" {
                     child.removeFromParentNode()
                 }
             }
