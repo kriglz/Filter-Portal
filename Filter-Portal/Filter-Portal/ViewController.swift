@@ -49,6 +49,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Show debug UI to view performance metrics (e.g. frames per second).
         sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
+        
+        
+        // Adds tap gesture to add plane to the scene.
+        let tapHandler = #selector(handleTapGesture(byReactingTo:))
+        let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
+        self.view.addGestureRecognizer(tapRecognizer)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -109,18 +115,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         plane.width = CGFloat(planeAnchor.extent.x)
         plane.height = CGFloat(planeAnchor.extent.z)
     }
-    
-    // MARK: - ARSKViewDelegate
-    
-    //    func view(_ view: ARSKView, nodeFor anchor: ARAnchor) -> SKNode? {
-    //        // Create and configure a node for the anchor added to the view's session.
-    //        let labelNode = SKLabelNode(text: "👾")
-    //        labelNode.horizontalAlignmentMode = .center
-    //        labelNode.verticalAlignmentMode = .center
-    //        return labelNode;
-    //    }
-    
-    
     
     
     // MARK: - ARSessionDelegate
@@ -197,79 +191,31 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         configuration.planeDetection = .horizontal
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
+    
+    
+    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
+        let touchPoint = byReactingTo.location(in: self.view)
+        
+        let cubeNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
+        cubeNode.position = SCNVector3(0, 0, -0.2) // SceneKit/AR coordinates are in meters
+        cubeNode.name = "cube"
+        
+        addToPlane(item: cubeNode, atPoint: touchPoint)
+    }
+    
+    func addToPlane(item: SCNNode, atPoint point: CGPoint) {
+        let hits = sceneView.hitTest(point, types: .existingPlaneUsingExtent)
+        if hits.count > 0, let firstHit = hits.first {
+                let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
+                item.position = hitPosition
+            
+            for child in sceneView.scene.rootNode.childNodes {
+                if child.name == "cube" {
+                    child.removeFromParentNode()
+                }
+            }
+            sceneView.scene.rootNode.addChildNode(item)
+        }
+    }
 }
-
-
-//
-//import UIKit
-//import SpriteKit
-//import ARKit
-//
-//class ViewController: UIViewController, ARSKViewDelegate {
-//
-//    @IBOutlet var sceneView: ARSKView!
-//    
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//
-//        // Set the view's delegate
-//        sceneView.delegate = self
-//
-//        // Show statistics such as fps and node count
-//        sceneView.showsFPS = true
-//        sceneView.showsNodeCount = true
-//
-//        // Load the SKScene from 'Scene.sks'
-//        if let scene = SKScene(fileNamed: "Scene") {
-//            sceneView.presentScene(scene)
-//        }
-//    }
-//
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//
-//        // Create a session configuration
-//        let configuration = ARWorldTrackingConfiguration()
-//
-//        // Run the view's session
-//        sceneView.session.run(configuration)
-//    }
-//
-//    override func viewWillDisappear(_ animated: Bool) {
-//        super.viewWillDisappear(animated)
-//
-//        // Pause the view's session
-//        sceneView.session.pause()
-//    }
-//
-//    override func didReceiveMemoryWarning() {
-//        super.didReceiveMemoryWarning()
-//        // Release any cached data, images, etc that aren't in use.
-//    }
-//
-//    // MARK: - ARSKViewDelegate
-//
-//    func view(_ view: ARSKView, nodeFor anchor: ARAnchor) -> SKNode? {
-//        // Create and configure a node for the anchor added to the view's session.
-//        let labelNode = SKLabelNode(text: "👾")
-//        labelNode.horizontalAlignmentMode = .center
-//        labelNode.verticalAlignmentMode = .center
-//        return labelNode;
-//    }
-//
-//    func session(_ session: ARSession, didFailWithError error: Error) {
-//        // Present an error message to the user
-//
-//    }
-//
-//    func sessionWasInterrupted(_ session: ARSession) {
-//        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-//
-//    }
-//
-//    func sessionInterruptionEnded(_ session: ARSession) {
-//        // Reset tracking and/or remove existing anchors if consistent tracking is required
-//
-//    }
-//}
 
