@@ -134,18 +134,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
     
-    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-//        print(frame.camera.transform) //intrinsics)
-//        print(sceneView.pointOfView?.position)
-//        print(cubeNode.position, "cube")
-        
         if let camera = sceneView.pointOfView {
             let deltaX = camera.position.x - portalNode.position.x
             let deltaY = camera.position.y - portalNode.position.y
             let deltaZ = camera.position.z - portalNode.position.z
             print(deltaX, deltaY, deltaZ)
-
         }
     }
     
@@ -210,13 +204,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
         let touchPoint = byReactingTo.location(in: self.view)
         let portal = spawnPortal()
+        
         addToPlane(item: portal, atPoint: touchPoint)
     }
     
     private func spawnPortal() -> SCNNode{
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.white
+        material.diffuse.contents = UIColor.red
+        material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
         portal.name = "portal"
@@ -228,7 +224,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if hits.count > 0, let firstHit = hits.first {
                 let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
                 item.position = hitPosition
-                item.position.y += Float(portalSize.height / 2.0)
+                item.position.y += Float(portalSize.height)
             
             for child in sceneView.scene.rootNode.childNodes {
                 if child.name == "portal" {
