@@ -139,7 +139,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let deltaX = camera.position.x - portalNode.position.x
             let deltaY = camera.position.y - portalNode.position.y
             let deltaZ = camera.position.z - portalNode.position.z
-            print(deltaX, deltaY, deltaZ)
+//            print(deltaX, deltaY, deltaZ)
         }
     }
     
@@ -188,7 +188,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             
         case .limited(.initializing):
             message = "Initializing AR session."
-            
         }
         
         sessionInfoLabel.text = message
@@ -222,9 +221,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func addToPlane(item: SCNNode, atPoint point: CGPoint) {
         let hits = sceneView.hitTest(point, types: .existingPlaneUsingExtent)
         if hits.count > 0, let firstHit = hits.first {
-                let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
-                item.position = hitPosition
-                item.position.y += Float(portalSize.height)
+            let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
+            item.position = hitPosition
+            item.position.y += Float(portalSize.height)
+            if let camera = sceneView.pointOfView {
+                // Set
+                item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
+            }
             
             for child in sceneView.scene.rootNode.childNodes {
                 if child.name == "portal" {
