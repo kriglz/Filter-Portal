@@ -1,24 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13122.16" systemVersion="17A278a" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13770" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13104.12"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13770"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tXr-a1-R10">
             <objects>
-                <viewController id="BV1-FR-VrT" customClass="ViewController" customModuleProvider="target" sceneMemberID="viewController">
-                    <arskView key="view" contentMode="scaleToFill" id="EO5-fy-WZq">
+                <viewController id="BV1-FR-VrT" customClass="ViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="aUX-A6-b9h">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    </arskView>
+                        <subviews>
+                            <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="C9T-vs-BRq">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <connections>
+                                    <outlet property="delegate" destination="BV1-FR-VrT" id="H3F-Xu-99a"/>
+                                </connections>
+                            </arscnView>
+                            <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
+                                <rect key="frame" x="16" y="612" width="58" height="35"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="BOu-hj-fzL">
+                                    <rect key="frame" x="0.0" y="0.0" width="58" height="35"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gBq-mx-UQs">
+                                            <rect key="frame" x="8" y="6" width="42" height="21"/>
+                                            <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                            <nil key="textColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="bottom" secondItem="BOu-hj-fzL" secondAttribute="bottomMargin" id="IeB-Ts-aOB"/>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="leading" secondItem="BOu-hj-fzL" secondAttribute="leading" constant="8" id="ZwV-sV-hpQ"/>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="trailing" secondItem="BOu-hj-fzL" secondAttribute="trailingMargin" id="nfm-0E-R3m"/>
+                                    </constraints>
+                                </view>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="35" id="ExD-ck-UyO"/>
+                                </constraints>
+                                <blurEffect style="light"/>
+                            </visualEffectView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="vlo-f7-vEM" firstAttribute="leading" secondItem="aUX-A6-b9h" secondAttribute="leadingMargin" id="0e7-9L-b7p"/>
+                            <constraint firstAttribute="trailing" secondItem="C9T-vs-BRq" secondAttribute="trailing" id="U8O-eD-bVI"/>
+                            <constraint firstItem="C9T-vs-BRq" firstAttribute="leading" secondItem="aUX-A6-b9h" secondAttribute="leading" id="Wvz-6j-pu8"/>
+                            <constraint firstItem="C9T-vs-BRq" firstAttribute="top" secondItem="aUX-A6-b9h" secondAttribute="top" id="azQ-n7-jPP"/>
+                            <constraint firstItem="C9T-vs-BRq" firstAttribute="bottom" secondItem="QK1-AY-nxF" secondAttribute="bottom" id="l08-3i-kCR"/>
+                            <constraint firstAttribute="bottom" secondItem="vlo-f7-vEM" secondAttribute="bottom" constant="20" symbolic="YES" id="s6R-CJ-aaM"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="QK1-AY-nxF"/>
+                    </view>
                     <connections>
-                        <outlet property="sceneView" destination="EO5-fy-WZq" id="YuC-8q-ovz"/>
+                        <outlet property="sceneView" destination="C9T-vs-BRq" id="mVk-aC-eEo"/>
+                        <outlet property="sessionInfoLabel" destination="gBq-mx-UQs" id="4HY-Jb-YPi"/>
+                        <outlet property="sessionInfoView" destination="vlo-f7-vEM" id="3vQ-KW-EHG"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
+                <visualEffectView opaque="NO" contentMode="scaleToFill" id="eTh-Ky-BNv">
+                    <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="Cmi-Fv-WU4">
+                        <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    </view>
+                    <blurEffect style="light"/>
+                </visualEffectView>
             </objects>
+            <point key="canvasLocation" x="32.799999999999997" y="33.733133433283363"/>
         </scene>
     </scenes>
 </document>

@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		89BE3CFA1FFEA9B1009F8636 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */; };
-		89BE3CFC1FFEA9B1009F8636 /* Scene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3CFB1FFEA9B1009F8636 /* Scene.sks */; };
 		89BE3CFE1FFEA9B1009F8636 /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CFD1FFEA9B1009F8636 /* Scene.swift */; };
 		89BE3D001FFEA9B1009F8636 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */; };
 		89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3D011FFEA9B1009F8636 /* Main.storyboard */; };
@@ -19,7 +18,6 @@
 /* Begin PBXFileReference section */
 		89BE3CF61FFEA9B1009F8636 /* Filter-Portal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Filter-Portal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		89BE3CFB1FFEA9B1009F8636 /* Scene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Scene.sks; sourceTree = "<group>"; };
 		89BE3CFD1FFEA9B1009F8636 /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 		89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		89BE3D021FFEA9B1009F8636 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -58,16 +56,23 @@
 		89BE3CF81FFEA9B1009F8636 /* Filter-Portal */ = {
 			isa = PBXGroup;
 			children = (
-				89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */,
-				89BE3CFB1FFEA9B1009F8636 /* Scene.sks */,
 				89BE3CFD1FFEA9B1009F8636 /* Scene.swift */,
 				89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */,
 				89BE3D011FFEA9B1009F8636 /* Main.storyboard */,
-				89BE3D041FFEA9B1009F8636 /* Assets.xcassets */,
-				89BE3D061FFEA9B1009F8636 /* LaunchScreen.storyboard */,
+				89BE3D0F1FFEAA99009F8636 /* Supporting Files */,
 				89BE3D091FFEA9B1009F8636 /* Info.plist */,
 			);
 			path = "Filter-Portal";
+			sourceTree = "<group>";
+		};
+		89BE3D0F1FFEAA99009F8636 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				89BE3D041FFEA9B1009F8636 /* Assets.xcassets */,
+				89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */,
+				89BE3D061FFEA9B1009F8636 /* LaunchScreen.storyboard */,
+			);
+			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -129,7 +134,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				89BE3CFC1FFEA9B1009F8636 /* Scene.sks in Resources */,
 				89BE3D081FFEA9B1009F8636 /* LaunchScreen.storyboard in Resources */,
 				89BE3D051FFEA9B1009F8636 /* Assets.xcassets in Resources */,
 				89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */,
