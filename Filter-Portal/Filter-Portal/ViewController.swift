@@ -138,9 +138,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
             
+            let cropRect = CGRect(x: 0, y: 0, width: 300, height: 600)
+            let croppedImage = frameImage.cropped(to: cropRect)
+            
+            
+//            let visiblePortalFrame = currentPositionInCameraFrame(of: portal)
+            
             if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
                 let filter = ciFilter
-                filter.setValue(frameImage, forKey: kCIInputImageKey)
+                filter.setValue(croppedImage, forKey: kCIInputImageKey)
                 
                 if let result = filter.outputImage {
                     let context = CIContext()
@@ -153,20 +159,47 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     portal.geometry?.materials = [material]
                 }
             }
-          
-
- 
-
-
             
-            
-            if let camera = sceneView.pointOfView {
-                let deltaX = camera.position.x - portalNode.position.x
-                let deltaY = camera.position.y - portalNode.position.y
-                let deltaZ = camera.position.z - portalNode.position.z
-                //            print(deltaX, deltaY, deltaZ)
-            }
+//            if let camera = sceneView.pointOfView {
+//                let deltaX = camera.position.x - portalNode.position.x
+//                let deltaY = camera.position.y - portalNode.position.y
+//                let deltaZ = camera.position.z - portalNode.position.z
+//                //            print(deltaX, deltaY, deltaZ)
+//            }
         }
+    }
+    
+
+    
+    func currentPositionInCameraFrame(of portal: SCNNode) -> CGRect {
+        let portalRect = CGRect()
+        
+        if let camera = sceneView.pointOfView {
+//            let cameraPositionX = camera.position.x
+//            let cameraPositionY = camera.position.y
+
+//            print(portal.position)
+            
+            let boundingBoxMin = sceneView.projectPoint(portal.boundingBox.min)
+            let boundingBoxMax = sceneView.projectPoint(portal.boundingBox.max)
+
+            let portalCenterProjection = sceneView.projectPoint(portal.position)
+            
+//            let maxProjection = sceneView.projectPoint(boundingBox.max)
+
+//            let minXPoint = self.view.convert(CGPoint(x: CGFloat(minProjection.x), y: CGFloat(minProjection.y)), from: sceneView)
+            
+            
+//            print(boundingBoxMin)
+//            print(boundingBoxMax)
+            print(portal.position.z - camera.position.z)
+            print(portalCenterProjection, sceneView.frame, "after \n")
+
+            
+        }
+        
+        
+        return portalRect
     }
     
     // MARK: - ARSessionObserver
