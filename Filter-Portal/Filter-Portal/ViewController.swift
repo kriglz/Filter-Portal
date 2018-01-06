@@ -136,23 +136,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            
-            let material = SCNMaterial()
-            material.isDoubleSided = true
-
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
             
-            let context = CIContext()
-            let filter = CIFilter(name: "CISepiaTone")!
-            filter.setValue(0.8, forKey: kCIInputIntensityKey)
-            filter.setValue(frameImage, forKey: kCIInputImageKey)
-            let result = filter.outputImage!
-            let frameCGImage = context.createCGImage(result, from: result.extent)
-            
-            material.diffuse.contents = frameCGImage
-            portal.geometry?.materials = [material]
+            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
+                let filter = ciFilter
+                filter.setValue(frameImage, forKey: kCIInputImageKey)
+                
+                if let result = filter.outputImage {
+                    let context = CIContext()
+                    let frameCGImage = context.createCGImage(result, from: result.extent)
+                    context.clearCaches()
+                    
+                    let material = SCNMaterial()
+                    material.isDoubleSided = true
+                    material.diffuse.contents = frameCGImage
+                    portal.geometry?.materials = [material]
+                }
+            }
+          
 
-            context.clearCaches()
+ 
+
 
             
             
@@ -241,8 +245,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         
         // Adds pixellating effect to the portal plane.
-//        let pixellate = CIFilter(name: "CIPixellate",
-//                                 withInputParameters: [kCIInputScaleKey: 20.0])!
+//        let pixellate = CIFilter(name: "CIPixellate", withInputParameters: [kCIInputScaleKey: 9.0])!
 //        portal.filters = [ pixellate ]
         
         return portal
