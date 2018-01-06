@@ -135,11 +135,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        if let camera = sceneView.pointOfView {
-            let deltaX = camera.position.x - portalNode.position.x
-            let deltaY = camera.position.y - portalNode.position.y
-            let deltaZ = camera.position.z - portalNode.position.z
-//            print(deltaX, deltaY, deltaZ)
+        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+            
+            let material = SCNMaterial()
+            material.isDoubleSided = true
+
+            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+            
+            let context = CIContext()
+            let filter = CIFilter(name: "CISepiaTone")!
+            filter.setValue(0.8, forKey: kCIInputIntensityKey)
+            filter.setValue(frameImage, forKey: kCIInputImageKey)
+            let result = filter.outputImage!
+            let frameCGImage = context.createCGImage(result, from: result.extent)
+            
+            material.diffuse.contents = frameCGImage
+            portal.geometry?.materials = [material]
+
+            context.clearCaches()
+
+            
+            
+            if let camera = sceneView.pointOfView {
+                let deltaX = camera.position.x - portalNode.position.x
+                let deltaY = camera.position.y - portalNode.position.y
+                let deltaZ = camera.position.z - portalNode.position.z
+                //            print(deltaX, deltaY, deltaZ)
+            }
         }
     }
     
@@ -210,11 +232,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func spawnPortal() -> SCNNode{
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.red
+        material.diffuse.contents = UIColor.white
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
         portal.name = "portal"
+//        portal.opacity = 1
+        
+        
+        // Adds pixellating effect to the portal plane.
+//        let pixellate = CIFilter(name: "CIPixellate",
+//                                 withInputParameters: [kCIInputScaleKey: 20.0])!
+//        portal.filters = [ pixellate ]
+        
         return portal
     }
     
@@ -225,7 +255,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             item.position = hitPosition
             item.position.y += Float(portalSize.height)
             if let camera = sceneView.pointOfView {
-                // Set
+                // Set plane position to face the camera.
                 item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
             }
             
