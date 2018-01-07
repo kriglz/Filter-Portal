@@ -139,11 +139,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-            
+
             let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             let croppedImage = frameImage.cropped(to: cropRect)
             
-            print(croppedImage.extent)
+//            print(cropRect)
             
             
             if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
@@ -193,11 +193,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         let portalRect = CGRect(x: projectionMin.x,
-                                y: projectionMax.y,
+                                y: imageSize.height - (projectionMin.y - projectionMax.y) - projectionMax.y,
                                 width: projectionMax.x - projectionMin.x,
                                 height: projectionMin.y - projectionMax.y)
-
-        print(portalRect)
         
         return portalRect
     }
