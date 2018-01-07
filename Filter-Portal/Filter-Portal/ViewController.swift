@@ -141,8 +141,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let cropRect = CGRect(x: 0, y: 0, width: 300, height: 600)
             let croppedImage = frameImage.cropped(to: cropRect)
             
+            let rectToBeUSed = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             
-//            let visiblePortalFrame = currentPositionInCameraFrame(of: portal)
+            
             
             if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
                 let filter = ciFilter
@@ -171,32 +172,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
 
     
-    func currentPositionInCameraFrame(of portal: SCNNode) -> CGRect {
+    func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
         let portalRect = CGRect()
         
-        if let camera = sceneView.pointOfView {
-//            let cameraPositionX = camera.position.x
-//            let cameraPositionY = camera.position.y
+        
+//            let boundingBoxMin = sceneView.projectPoint(portal.boundingBox.min)
+//            let boundingBoxMax = sceneView.projectPoint(portal.boundingBox.max)
+//            let boundingBoxCamera = sceneView.projectPoint(camera.position)
 
-//            print(portal.position)
-            
-            let boundingBoxMin = sceneView.projectPoint(portal.boundingBox.min)
-            let boundingBoxMax = sceneView.projectPoint(portal.boundingBox.max)
+        let portalCenter = vector_float3.init(portal.position)
+        let projectionCenter = imageFrame.projectPoint(portalCenter, orientation: .portrait, viewportSize: imageSize)
+        
+        
+        let convertMinPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.min, from: portal)
+        let boundingBoxMin = vector_float3.init(convertMinPoint)
+        let projectionMin = imageFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
 
-            let portalCenterProjection = sceneView.projectPoint(portal.position)
-            
-//            let maxProjection = sceneView.projectPoint(boundingBox.max)
+        let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
+        let boundingBoxMax = vector_float3.init(convertMaxPoint)
+        let projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
 
-//            let minXPoint = self.view.convert(CGPoint(x: CGFloat(minProjection.x), y: CGFloat(minProjection.y)), from: sceneView)
-            
-            
-//            print(boundingBoxMin)
-//            print(boundingBoxMax)
-            print(portal.position.z - camera.position.z)
-            print(portalCenterProjection, sceneView.frame, "after \n")
 
-            
-        }
+        print(portal.position)
+        print(projectionMin, projectionCenter, projectionMax, "\n")
+        
         
         
         return portalRect
