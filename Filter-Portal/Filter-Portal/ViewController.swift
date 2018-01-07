@@ -134,15 +134,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
     
+    let context = CIContext()
+    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
             
-            let cropRect = CGRect(x: 0, y: 0, width: 300, height: 600)
+            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             let croppedImage = frameImage.cropped(to: cropRect)
             
-            let rectToBeUSed = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-            
+            print(croppedImage.extent)
             
             
             if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
@@ -150,14 +151,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 filter.setValue(croppedImage, forKey: kCIInputImageKey)
                 
                 if let result = filter.outputImage {
-                    let context = CIContext()
                     let frameCGImage = context.createCGImage(result, from: result.extent)
-                    context.clearCaches()
-                    
+                
                     let material = SCNMaterial()
                     material.isDoubleSided = true
                     material.diffuse.contents = frameCGImage
                     portal.geometry?.materials = [material]
+                    context.clearCaches()
                 }
             }
             
@@ -173,30 +173,31 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     
     func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
-        let portalRect = CGRect()
-        
-        
-//            let boundingBoxMin = sceneView.projectPoint(portal.boundingBox.min)
-//            let boundingBoxMax = sceneView.projectPoint(portal.boundingBox.max)
-//            let boundingBoxCamera = sceneView.projectPoint(camera.position)
 
-        let portalCenter = vector_float3.init(portal.position)
-        let projectionCenter = imageFrame.projectPoint(portalCenter, orientation: .portrait, viewportSize: imageSize)
-        
+//        let portalCenter = vector_float3.init(portal.position)
+//        let projectionCenter = imageFrame.projectPoint(portalCenter, orientation: .portrait, viewportSize: imageSize)
         
         let convertMinPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.min, from: portal)
         let boundingBoxMin = vector_float3.init(convertMinPoint)
-        let projectionMin = imageFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
+        var projectionMin = imageFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
 
         let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
         let boundingBoxMax = vector_float3.init(convertMaxPoint)
-        let projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
+        var projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
 
+        if projectionMin.x < 0 {
+            projectionMin.x = 0
+        }
+        if projectionMax.y < 0 {
+            projectionMax.y = 0
+        }
+        
+        let portalRect = CGRect(x: projectionMin.x,
+                                y: projectionMax.y,
+                                width: projectionMax.x - projectionMin.x,
+                                height: projectionMin.y - projectionMax.y)
 
-        print(portal.position)
-        print(projectionMin, projectionCenter, projectionMax, "\n")
-        
-        
+        print(portalRect)
         
         return portalRect
     }
