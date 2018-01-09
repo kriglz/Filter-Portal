@@ -9,14 +9,15 @@
 import UIKit
 import SceneKit
 import ARKit
+import SpriteKit
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
-    private let portalSize: CGSize = CGSize(width: 0.5, height: 1)
+//    private let portalNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
+    private let portalSize: CGSize = CGSize(width: 0.5, height: 1.5)
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -138,53 +139,50 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         
         if let filter = CIFilter(name: "CIPhotoEffectTonal") {
-            let image = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+            let image = CIImage(cvPixelBuffer: frame.capturedImage)//.oriented(.right)
             filter.setValue(image, forKey: kCIInputImageKey)
             if let result = filter.outputImage {
                 let cgImage = context.createCGImage(result, from: result.extent)
                 sceneView.scene.background.contents = cgImage
-                
-//                if let transform = currentScreenTransform() {
-//                    sceneView.scene.background.contentsTransform = transform
-//                }
+
+                if let transform = currentScreenTransform() {
+                    sceneView.scene.background.contentsTransform = transform
+                }
                 context.clearCaches()
             }
         }
         
         
         
-        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+//        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+//            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+//
+//            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+//            let croppedImage = frameImage.cropped(to: cropRect)
+//
+//            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
+//                let filter = ciFilter
+//                filter.setValue(croppedImage, forKey: kCIInputImageKey)
+//
+//                if let result = filter.outputImage {
+//                    let frameCGImage = context.createCGImage(result, from: result.extent)
+//
+//                    let material = SCNMaterial()
+//                    material.isDoubleSided = true
+//                    material.diffuse.contents = frameCGImage
+//                    portal.geometry?.materials = [material]
+//                    context.clearCaches()
+//                }
+//            }
+//        }
 
-            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-            let croppedImage = frameImage.cropped(to: cropRect)
-            
-//            print(cropRect)
-            
-            
-            
-            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
-                let filter = ciFilter
-                filter.setValue(croppedImage, forKey: kCIInputImageKey)
-                
-                if let result = filter.outputImage {
-                    let frameCGImage = context.createCGImage(result, from: result.extent)
-                
-                    let material = SCNMaterial()
-                    material.isDoubleSided = true
-                    material.diffuse.contents = frameCGImage
-                    portal.geometry?.materials = [material]
-                    context.clearCaches()
-                }
-            }
-            
 //            if let camera = sceneView.pointOfView {
 //                let deltaX = camera.position.x - portalNode.position.x
 //                let deltaY = camera.position.y - portalNode.position.y
 //                let deltaZ = camera.position.z - portalNode.position.z
 //                //            print(deltaX, deltaY, deltaZ)
 //            }
-        }
+//        }
     }
     
 
@@ -277,25 +275,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
         let touchPoint = byReactingTo.location(in: self.view)
         let portal = spawnPortal()
-        
         addToPlane(item: portal, atPoint: touchPoint)
     }
     
     private func spawnPortal() -> SCNNode{
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.white
+        material.transparency = 0.1
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
         portal.name = "portal"
-//        portal.opacity = 1
-        
-        
-        // Adds pixellating effect to the portal plane.
-//        let pixellate = CIFilter(name: "CIPixellate", withInputParameters: [kCIInputScaleKey: 9.0])!
-//        portal.filters = [ pixellate ]
-        
         return portal
     }
     
@@ -303,8 +293,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let hits = sceneView.hitTest(point, types: .existingPlaneUsingExtent)
         if hits.count > 0, let firstHit = hits.first {
             let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
+            
             item.position = hitPosition
-            item.position.y += Float(portalSize.height)
+            item.position.y += Float(portalSize.height/2)
             if let camera = sceneView.pointOfView {
                 // Set plane position to face the camera.
                 item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
@@ -316,6 +307,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
             }
             sceneView.scene.rootNode.addChildNode(item)
+        }
+    }
+    
+    private func currentScreenTransform() -> SCNMatrix4? {
+        switch UIDevice.current.orientation {
+        case .landscapeLeft:
+            return SCNMatrix4Identity
+        case .landscapeRight:
+            return SCNMatrix4MakeRotation(.pi, 0, 0, 1)
+        case .portrait:
+            return SCNMatrix4MakeRotation(.pi / 2, 0, 0, 1)
+        case .portraitUpsideDown:
+            return SCNMatrix4MakeRotation(-.pi / 2, 0, 0, 1)
+        default:
+            return nil
         }
     }
 }
