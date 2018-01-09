@@ -52,7 +52,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
         
-        // Adds tap gesture to add plane to the scene.
         let tapHandler = #selector(handleTapGesture(byReactingTo:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
@@ -137,6 +136,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     let context = CIContext()
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        
+        if let filter = CIFilter(name: "CIPhotoEffectTonal") {
+            let image = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+            filter.setValue(image, forKey: kCIInputImageKey)
+            if let result = filter.outputImage {
+                let cgImage = context.createCGImage(result, from: result.extent)
+                sceneView.scene.background.contents = cgImage
+                
+//                if let transform = currentScreenTransform() {
+//                    sceneView.scene.background.contentsTransform = transform
+//                }
+                context.clearCaches()
+            }
+        }
+        
+        
+        
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
 
@@ -144,6 +160,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let croppedImage = frameImage.cropped(to: cropRect)
             
 //            print(cropRect)
+            
             
             
             if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
@@ -184,7 +201,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
         let boundingBoxMax = vector_float3.init(convertMaxPoint)
         var projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
-
+        
         if projectionMin.x < 0 {
             projectionMin.x = 0
         }
