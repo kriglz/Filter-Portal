@@ -138,43 +138,51 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         
-        if let filter = CIFilter(name: "CIPhotoEffectTonal") {
-            let image = CIImage(cvPixelBuffer: frame.capturedImage)//.oriented(.right)
-            filter.setValue(image, forKey: kCIInputImageKey)
-            if let result = filter.outputImage {
-                let cgImage = context.createCGImage(result, from: result.extent)
-                sceneView.scene.background.contents = cgImage
+//        if let filter = CIFilter(name: "CIPhotoEffectTonal") {
+//            let image = CIImage(cvPixelBuffer: frame.capturedImage)//.oriented(.right)
+//            filter.setValue(image, forKey: kCIInputImageKey)
+//            if let result = filter.outputImage {
+//                let cgImage = context.createCGImage(result, from: result.extent)
+//                sceneView.scene.background.contents = cgImage
+//
+//                if let transform = currentScreenTransform() {
+//                    sceneView.scene.background.contentsTransform = transform
+//                }
+//                context.clearCaches()
+//            }
+//        }
+        
+        
+        
+        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
 
-                if let transform = currentScreenTransform() {
-                    sceneView.scene.background.contentsTransform = transform
-                }
-                context.clearCaches()
-            }
-        }
-        
-        
-        
-//        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-//            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-//
-//            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-//            let croppedImage = frameImage.cropped(to: cropRect)
-//
-//            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
-//                let filter = ciFilter
-//                filter.setValue(croppedImage, forKey: kCIInputImageKey)
-//
-//                if let result = filter.outputImage {
-//                    let frameCGImage = context.createCGImage(result, from: result.extent)
-//
+            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+            let croppedImage = frameImage.cropped(to: cropRect)
+            
+            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
+                let filter = ciFilter
+                filter.setValue(croppedImage, forKey: kCIInputImageKey)
+
+                if let result = filter.outputImage {
+                    let newImage = result.composited(over: frameImage)
+
+                    let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
+                    sceneView.scene.background.contents = frameCGImage
+                    context.clearCaches()
+
+                    
+                    
+//                    UIGraphicsBeginImageContext(frameImage.extent.size)
+//                    let newImage = UIGraphicsGetImageFromCurrentImageContext()
+                    
 //                    let material = SCNMaterial()
 //                    material.isDoubleSided = true
 //                    material.diffuse.contents = frameCGImage
 //                    portal.geometry?.materials = [material]
-//                    context.clearCaches()
-//                }
-//            }
-//        }
+                }
+            }
+        }
 
 //            if let camera = sceneView.pointOfView {
 //                let deltaX = camera.position.x - portalNode.position.x
@@ -184,7 +192,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 //            }
 //        }
     }
-    
 
     
     func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
@@ -281,7 +288,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func spawnPortal() -> SCNNode{
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.transparency = 0.1
+        material.transparency = 0.0
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
