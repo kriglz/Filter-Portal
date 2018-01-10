@@ -94,6 +94,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
          */
         node.name = "plane"
         node.addChildNode(planeNode)
+        
+        // Removes debugging feature points.
+        sceneView.debugOptions.remove(ARSCNDebugOptions.showFeaturePoints)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -157,44 +160,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
 
-            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-            let croppedImage = frameImage.cropped(to: cropRect)
-            
-            if let ciFilter = CIFilter(name: "CIPhotoEffectTonal") {
-                let filter = ciFilter
-                filter.setValue(croppedImage, forKey: kCIInputImageKey)
+            if let ciFilter = CIFilter(name: portalCIFilter) {
+                let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+                let croppedImage = frameImage.cropped(to: cropRect)
 
-                if let result = filter.outputImage {
-                    let newImage = result.composited(over: frameImage)
+                if !isInFilteredSide {
+                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    
+                    if let result = ciFilter.outputImage {
+                        let newImage = result.composited(over: frameImage)
+                        
+                        let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
+                        sceneView.scene.background.contents = frameCGImage
+                    }
+                } else {
+                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    
+                    if let result = ciFilter.outputImage {
+                        let newImage = croppedImage.composited(over: result)
 
-                    let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
-                    sceneView.scene.background.contents = frameCGImage
-                    context.clearCaches()
-
-                    
-                    
-//                    UIGraphicsBeginImageContext(frameImage.extent.size)
-//                    let newImage = UIGraphicsGetImageFromCurrentImageContext()
-                    
-//                    let material = SCNMaterial()
-//                    material.isDoubleSided = true
-//                    material.diffuse.contents = frameCGImage
-//                    portal.geometry?.materials = [material]
+                        let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
+                        sceneView.scene.background.contents = frameCGImage
+                    }
                 }
+                context.clearCaches()
             }
         }
-
-//            if let camera = sceneView.pointOfView {
-//                let deltaX = camera.position.x - portalNode.position.x
-//                let deltaY = camera.position.y - portalNode.position.y
-//                let deltaZ = camera.position.z - portalNode.position.z
-//                //            print(deltaX, deltaY, deltaZ)
-//            }
-//        }
     }
 
+    private let portalCIFilter: String = "CIPhotoEffectTonal"
+    private var isInFilteredSide = true
     
-    func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
+    
+    private func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
 
 //        let portalCenter = vector_float3.init(portal.position)
 //        let projectionCenter = imageFrame.projectPoint(portalCenter, orientation: .portrait, viewportSize: imageSize)
@@ -283,6 +281,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let touchPoint = byReactingTo.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
+        
+        // Removes plane child nodes when portal is added.
+        for child in sceneView.scene.rootNode.childNodes {
+            if child.name == "plane" {
+                child.removeFromParentNode()
+            }
+        }
     }
     
     private func spawnPortal() -> SCNNode{
