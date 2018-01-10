@@ -156,40 +156,40 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 //        }
         
         
-        
+        let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-
-            if let ciFilter = CIFilter(name: portalCIFilter) {
-                let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-                let croppedImage = frameImage.cropped(to: cropRect)
-
-                if !isInFilteredSide {
+            let cropRect = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+            let croppedImage = frameImage.cropped(to: cropRect)
+            
+            if !isInFilteredSide {
+                if let ciFilter = CIFilter(name: portalCIFilter) {
                     ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
                         let newImage = result.composited(over: frameImage)
-                        
                         let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
                         sceneView.scene.background.contents = frameCGImage
+                        context.clearCaches()
                     }
-                } else {
+                }
+            } else {
+                if let ciFilter = CIFilter(name: portalCIFilter) {
                     ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
-                        let newImage = croppedImage.composited(over: result)
-
+                        let newImage = result//croppedImage.composited(over: result)
                         let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
                         sceneView.scene.background.contents = frameCGImage
+                        context.clearCaches()
                     }
                 }
-                context.clearCaches()
             }
         }
     }
 
     private let portalCIFilter: String = "CIPhotoEffectTonal"
-    private var isInFilteredSide = true
+    private var isInFilteredSide = false
     
     
     private func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
@@ -217,6 +217,22 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                                 width: projectionMax.x - projectionMin.x,
                                 height: projectionMin.y - projectionMax.y)
         
+//        print(projectionMin, projectionMax)
+//        print(imageSize)
+        
+        print((sceneView.pointOfView?.position.z)! - portal.position.z)
+        
+        if let camera = sceneView.pointOfView {
+            if !isInFilteredSide {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0.2 {
+                    print("isInFilteredSide")
+                    isInFilteredSide = true
+                } else {
+                    print("no")
+                    isInFilteredSide = false
+                }
+            }
+        }
         return portalRect
     }
     
@@ -275,19 +291,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = .horizontal
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+        removePlaneNodes()
+        removePortalNode()
     }
     
-    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
-        let touchPoint = byReactingTo.location(in: self.view)
-        let portal = spawnPortal()
-        addToPlane(item: portal, atPoint: touchPoint)
-        
+    private func removePlaneNodes(){
         // Removes plane child nodes when portal is added.
         for child in sceneView.scene.rootNode.childNodes {
             if child.name == "plane" {
                 child.removeFromParentNode()
             }
         }
+    }
+    
+    private func removePortalNode(){
+        // Removes plane child nodes when portal is added.
+        for child in sceneView.scene.rootNode.childNodes {
+            if child.name == "portal" {
+                child.removeFromParentNode()
+            }
+        }
+    }
+    
+    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
+        let touchPoint = byReactingTo.location(in: self.view)
+        let portal = spawnPortal()
+        addToPlane(item: portal, atPoint: touchPoint)
+        removePlaneNodes()
     }
     
     private func spawnPortal() -> SCNNode{
