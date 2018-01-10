@@ -16,8 +16,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-//    private let portalNode = SCNNode(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0))
-    private let portalSize: CGSize = CGSize(width: 0.5, height: 1.5)
+    private let portalSize: CGSize = CGSize(width: 0.7, height: 1.9)
+    
+    private let context = CIContext()
+    private let portalCIFilter: String = "CIPhotoEffectTonal"
+    private var isInFilteredSide = false
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -52,7 +55,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
-        
+        // Adds tap gesture recognizer to add portal to the scene.
         let tapHandler = #selector(handleTapGesture(byReactingTo:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
@@ -137,25 +140,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
     
-    let context = CIContext()
-    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        
-//        if let filter = CIFilter(name: "CIPhotoEffectTonal") {
-//            let image = CIImage(cvPixelBuffer: frame.capturedImage)//.oriented(.right)
-//            filter.setValue(image, forKey: kCIInputImageKey)
-//            if let result = filter.outputImage {
-//                let cgImage = context.createCGImage(result, from: result.extent)
-//                sceneView.scene.background.contents = cgImage
-//
-//                if let transform = currentScreenTransform() {
-//                    sceneView.scene.background.contentsTransform = transform
-//                }
-//                context.clearCaches()
-//            }
-//        }
-        
-        
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
 
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
@@ -188,10 +173,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
 
-    private let portalCIFilter: String = "CIPhotoEffectTonal"
-    private var isInFilteredSide = false
-    
-    
     private func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> CGRect {
 
 //        let portalCenter = vector_float3.init(portal.position)
@@ -216,20 +197,22 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                                 y: imageSize.height - (projectionMin.y - projectionMax.y) - projectionMax.y,
                                 width: projectionMax.x - projectionMin.x,
                                 height: projectionMin.y - projectionMax.y)
+
         
-//        print(projectionMin, projectionMax)
-//        print(imageSize)
-        
-        print((sceneView.pointOfView?.position.z)! - portal.position.z)
+//        print((sceneView.pointOfView?.position.z)! - portal.position.z)
         
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
                 if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0.2 {
-                    print("isInFilteredSide")
                     isInFilteredSide = true
                 } else {
-                    print("no")
                     isInFilteredSide = false
+                }
+            } else {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > -0.2 {
+                    isInFilteredSide = false
+                } else {
+                    isInFilteredSide = true
                 }
             }
         }
@@ -291,8 +274,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = .horizontal
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
-        removePlaneNodes()
-        removePortalNode()
+    }
+    
+    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
+        let touchPoint = byReactingTo.location(in: self.view)
+        let portal = spawnPortal()
+        addToPlane(item: portal, atPoint: touchPoint)
+//        removePlaneNodes()
     }
     
     private func removePlaneNodes(){
@@ -302,22 +290,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 child.removeFromParentNode()
             }
         }
-    }
-    
-    private func removePortalNode(){
-        // Removes plane child nodes when portal is added.
-        for child in sceneView.scene.rootNode.childNodes {
-            if child.name == "portal" {
-                child.removeFromParentNode()
-            }
-        }
-    }
-    
-    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
-        let touchPoint = byReactingTo.location(in: self.view)
-        let portal = spawnPortal()
-        addToPlane(item: portal, atPoint: touchPoint)
-        removePlaneNodes()
     }
     
     private func spawnPortal() -> SCNNode{
@@ -352,19 +324,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func currentScreenTransform() -> SCNMatrix4? {
-        switch UIDevice.current.orientation {
-        case .landscapeLeft:
-            return SCNMatrix4Identity
-        case .landscapeRight:
-            return SCNMatrix4MakeRotation(.pi, 0, 0, 1)
-        case .portrait:
-            return SCNMatrix4MakeRotation(.pi / 2, 0, 0, 1)
-        case .portraitUpsideDown:
-            return SCNMatrix4MakeRotation(-.pi / 2, 0, 0, 1)
-        default:
-            return nil
-        }
-    }
+//    private func currentScreenOrientation() -> CGImagePropertyOrientation {
+//        switch UIDevice.current.orientation {
+//        case .landscapeLeft:
+//            return SCNMatrix4Identity
+//        case .landscapeRight:
+//            return SCNMatrix4MakeRotation(.pi, 0, 0, 1)
+//        case .portrait:
+//            return SCNMatrix4MakeRotation(.pi / 2, 0, 0, 1)
+//        case .portraitUpsideDown:
+//            return CNMatrix4MakeRotation(-.pi / 2, 0, 0, 1)
+//        default:
+//            return nil
+//        }
+//    }
 }
 
