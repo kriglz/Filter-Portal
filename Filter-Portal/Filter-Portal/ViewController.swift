@@ -163,7 +163,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
-                        let newImage = result//croppedImage.composited(over: result)
+                        let newImage = croppedImage.composited(over: result)
                         let frameCGImage = context.createCGImage(newImage, from: newImage.extent)
                         sceneView.scene.background.contents = frameCGImage
                         context.clearCaches()
@@ -203,13 +203,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0.2 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0.1 {
                     isInFilteredSide = true
                 } else {
                     isInFilteredSide = false
                 }
             } else {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > -0.2 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > -0.1 {
                     isInFilteredSide = false
                 } else {
                     isInFilteredSide = true
@@ -292,7 +292,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func spawnPortal() -> SCNNode{
+    private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
         material.transparency = 0.0
