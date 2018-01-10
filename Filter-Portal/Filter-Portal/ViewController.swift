@@ -181,23 +181,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let convertMinLeftPoint = sceneView.scene.rootNode.convertPosition(minLeftPoint, from: portal)
         let boundingBoxLeftPointMin = vector_float3.init(convertMinLeftPoint)
         var projectionMinLeft = imageFrame.projectPoint(boundingBoxLeftPointMin, orientation: .portrait, viewportSize: imageSize)
-        projectionMinLeft = updateBoundingBox(point: projectionMinLeft, to: imageSize)
+//        projectionMinLeft = updateBoundingBox(point: projectionMinLeft, to: imageSize)
         
         let maxRightPoint = SCNVector3.init(portal.boundingBox.max.x, portal.boundingBox.min.y, 0)
         let convertMaxRightPoint = sceneView.scene.rootNode.convertPosition(maxRightPoint, from: portal)
         let boundingBoxRightPointMax = vector_float3.init(convertMaxRightPoint)
         var projectionMaxRight = imageFrame.projectPoint(boundingBoxRightPointMax, orientation: .portrait, viewportSize: imageSize)
-        projectionMaxRight = updateBoundingBox(point: projectionMinLeft, to: imageSize)
+//        projectionMaxRight = updateBoundingBox(point: projectionMaxRight, to: imageSize)
         
         let convertMinPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.min, from: portal)
         let boundingBoxMin = vector_float3.init(convertMinPoint)
         var projectionMin = imageFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
-        projectionMin = updateBoundingBox(point: projectionMin, to: imageSize)
+//        projectionMin = updateBoundingBox(point: projectionMin, to: imageSize)
 
         let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
         let boundingBoxMax = vector_float3.init(convertMaxPoint)
         var projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
-        projectionMax = updateBoundingBox(point: projectionMax, to: imageSize)
+//        projectionMax = updateBoundingBox(point: projectionMax, to: imageSize)
 
         
 
@@ -207,12 +207,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 //                                width: projectionMax.x - projectionMin.x,
 //                                height: projectionMin.y - projectionMax.y)
 
- 
-        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: CGPoint(x: projectionMinLeft.x, y: imageSize.height - projectionMin.y), //projectionMinLeft,
-                                                            pointB: CGPoint(x: projectionMax.x, y: imageSize.height - projectionMaxRight.y),//projectionMax,
-                                                            pointC: CGPoint(x: projectionMaxRight.x, y: imageSize.height - projectionMax.y),//projectionMaxRight,
-                                                            pointD: CGPoint(x: projectionMin.x, y: imageSize.height - projectionMinLeft.y), //projectionMin,
-                                                            in: imageSize)
+        
+//        imageSize.height - projectionMaxRight.y + (projectionMax.y - projectionMaxRight.y)
+//        imageSize.height - projectionMin.y  + (projectionMinLeft.y - projectionMin.y)
+        
+//        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: CGPoint(x: projectionMinLeft.x, y: imageSize.height - projectionMin.y), //projectionMinLeft,
+//                                                            pointB: CGPoint(x: projectionMax.x, y: imageSize.height - projectionMaxRight.y),//projectionMax,
+//                                                            pointC: CGPoint(x: projectionMaxRight.x, y: imageSize.height - projectionMax.y),//projectionMaxRight,
+//                                                            pointD: CGPoint(x: projectionMin.x, y: imageSize.height - projectionMinLeft.y), //projectionMin,
+//                                                            in: imageSize)
+        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
+        
+        print(croppingShape)
         
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
@@ -232,25 +238,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         return croppingShape
     }
     
-    private func updateBoundingBox(point: CGPoint, to imageBounds: CGSize) -> CGPoint {
-        var newPoint: CGPoint = CGPoint.zero
-        
-        // Checks if x is in the image frame
-        if point.x > 0 && point.x <= imageBounds.width {
-            newPoint.x = point.x
-        } else if point.x > imageBounds.width {
-            newPoint.x = imageBounds.width
-        }
-        
-        // Checks if y is in the image frame
-        if point.y > 0 && point.y <= imageBounds.height {
-            newPoint.y = point.y
-        } else if point.y > imageBounds.height {
-            newPoint.y = imageBounds.height
-        }
-        
-        return newPoint
-    }
+//    private func updateBoundingBox(point: CGPoint, to imageBounds: CGSize) -> CGPoint {
+//        var newPoint: CGPoint = CGPoint.zero
+//        
+//        // Checks if x is in the image frame
+//        if point.x >= 0 && point.x <= imageBounds.width {
+//            newPoint.x = point.x
+//        } else if point.x > imageBounds.width {
+//            newPoint.x = imageBounds.width
+//        }
+//        
+//        // Checks if y is in the image frame
+//        if point.y >= 0 && point.y <= imageBounds.height {
+//            newPoint.y = point.y
+//        } else if point.y > imageBounds.height {
+//            newPoint.y = imageBounds.height
+//        }
+//        
+//        return newPoint
+//    }
     
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
@@ -358,7 +364,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.transparency = 0.0
+        material.transparency = 0.05
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
