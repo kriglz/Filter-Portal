@@ -16,10 +16,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalSize: CGSize = CGSize(width: 0.5, height: 1.2)
+    private let portalSize: CGSize = CGSize(width: 1, height: 2.5)
     
     private let context = CIContext()
-    private let portalCIFilter: String = "CIPhotoEffectTonal"
+    private let portalCIFilter: String = "CILineOverlay"
+    //"CIPointillize"
+    //"CIEdgeWork"
+    //"CIEdges"
+    //"CICrystallize"
+    //"CIColorPosterize"
+    //"CIColorInvert"
+    //"CIPhotoEffectTonal"
     private var isInFilteredSide = false
     
     override func viewDidLoad() {
@@ -159,9 +166,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             if !isInFilteredSide {
                 if let ciFilter = CIFilter(name: portalCIFilter) {
                     ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    ciFilter.setValue(50.0, forKey: kCIInputContrastKey)
+
+                    
+//                    ciFilter.setValue(5.0, forKey: kCIInputRadiusKey) //CIPointillize
+                    
+//                    ciFilter.setValue(7.0, forKey: kCIInputRadiusKey) //CICrystallize
+                    
                     
                     if let result = ciFilter.outputImage {
+//                        let new = 
+                        
+                        
                         let newImage = result.composited(over: frameImage)
+
                         let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
                         sceneView.scene.background.contents = frameCGImage
                     }
@@ -209,13 +227,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Alters between filter and nonfilter enviroment mode, based on camera position.
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0.1 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0 {
                     isInFilteredSide = true
                 } else {
                     isInFilteredSide = false
                 }
             } else {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > -0.1 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > 0 {
                     isInFilteredSide = false
                 } else {
                     isInFilteredSide = true
@@ -233,6 +251,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         path.addLine(to: pointC)
         path.addLine(to: pointD)
         path.close()
+        
         return path
     }
     
@@ -320,7 +339,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let touchPoint = byReactingTo.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
-//        removePlaneNodes()
+        removePlaneNodes()
     }
     
     private func removePlaneNodes(){
