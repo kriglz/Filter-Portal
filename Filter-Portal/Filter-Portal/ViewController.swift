@@ -16,11 +16,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalSize: CGSize = CGSize(width: 0.7, height: 1.9)
+    private let portalSize: CGSize = CGSize(width: 0.5, height: 1.2)
     
     private let context = CIContext()
     private let portalCIFilter: String = "CIPhotoEffectTonal"
     private var isInFilteredSide = false
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+    }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -59,12 +64,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let tapHandler = #selector(handleTapGesture(byReactingTo:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
+        
+        
+//        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+//        NotificationCenter.default.addObserver(self, selector: #selector(currentDeviceOrientation), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         // Pause the view's session
         sceneView.session.pause()
+        NotificationCenter.default.removeObserver(self)
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
     }
     
     
@@ -146,8 +157,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
            
-            let maskedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
-            let croppedImage = maskedImage.cropped(to: cropShape.bounds)
+            let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
             
             if !isInFilteredSide {
                 if let ciFilter = CIFilter(name: portalCIFilter) {
@@ -174,51 +184,63 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
+    
+//    private var currentOrientation: Int = 1
+//
+//    @objc private func currentDeviceOrientation(){
+//        switch UIDevice.current.orientation {
+//        case .portrait:
+//            currentOrientation = 1
+//        case .landscapeLeft:
+//            currentOrientation = 3
+//        case .landscapeRight:
+//            currentOrientation = 4
+//        case .portraitUpsideDown:
+//            currentOrientation = 2
+//        case .faceUp:
+//            currentOrientation = 5
+//        case .faceDown:
+//            currentOrientation = 6
+//        default:
+//            currentOrientation = 1
+//        }
+//    }
+    
+    private func getProjection(of nodes: SCNNode, _ vector: SCNVector3, in imageSize: CGSize, in imageCameraFrame: ARCamera) -> CGPoint {
 
-    private func currentPositionInCameraFrame(of portal: SCNNode, in imageFrame: ARCamera, with imageSize: CGSize) -> UIBezierPath {
+        let convertedVector = sceneView.scene.rootNode.convertPosition(vector, from: nodes)
+        let convertedToFloatVector = vector_float3.init(convertedVector)
+        let projection = imageCameraFrame.projectPoint(convertedToFloatVector, orientation: .portrait, viewportSize: imageSize)
+        return projection
+    }
+    
+    private func currentPositionInCameraFrame(of portal: SCNNode, in imageCameraFrame: ARCamera, with imageSize: CGSize) -> UIBezierPath {
  
+        
         let minLeftPoint = SCNVector3.init(portal.boundingBox.min.x, portal.boundingBox.max.y, 0)
-        let convertMinLeftPoint = sceneView.scene.rootNode.convertPosition(minLeftPoint, from: portal)
-        let boundingBoxLeftPointMin = vector_float3.init(convertMinLeftPoint)
-        var projectionMinLeft = imageFrame.projectPoint(boundingBoxLeftPointMin, orientation: .portrait, viewportSize: imageSize)
-//        projectionMinLeft = updateBoundingBox(point: projectionMinLeft, to: imageSize)
+        let projectionMinLeft = getProjection(of: portal, minLeftPoint, in: imageSize, in: imageCameraFrame)
+//        let convertMinLeftPoint = sceneView.scene.rootNode.convertPosition(minLeftPoint, from: portal)
+//        let boundingBoxLeftPointMin = vector_float3.init(convertMinLeftPoint)
+//        let projectionMinLeft = imageFrame.projectPoint(boundingBoxLeftPointMin, orientation: .portrait, viewportSize: imageSize)
         
         let maxRightPoint = SCNVector3.init(portal.boundingBox.max.x, portal.boundingBox.min.y, 0)
-        let convertMaxRightPoint = sceneView.scene.rootNode.convertPosition(maxRightPoint, from: portal)
-        let boundingBoxRightPointMax = vector_float3.init(convertMaxRightPoint)
-        var projectionMaxRight = imageFrame.projectPoint(boundingBoxRightPointMax, orientation: .portrait, viewportSize: imageSize)
-//        projectionMaxRight = updateBoundingBox(point: projectionMaxRight, to: imageSize)
-        
-        let convertMinPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.min, from: portal)
-        let boundingBoxMin = vector_float3.init(convertMinPoint)
-        var projectionMin = imageFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
-//        projectionMin = updateBoundingBox(point: projectionMin, to: imageSize)
+        let projectionMaxRight = getProjection(of: portal, maxRightPoint, in: imageSize, in: imageCameraFrame)
 
-        let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
-        let boundingBoxMax = vector_float3.init(convertMaxPoint)
-        var projectionMax = imageFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
-//        projectionMax = updateBoundingBox(point: projectionMax, to: imageSize)
+//        let convertMaxRightPoint = sceneView.scene.rootNode.convertPosition(maxRightPoint, from: portal)
+//        let boundingBoxRightPointMax = vector_float3.init(convertMaxRightPoint)
+//        let projectionMaxRight = imageFrame.projectPoint(boundingBoxRightPointMax, orientation: .portrait, viewportSize: imageSize)
+        
+//        let convertMinPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.min, from: portal)
+        let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
+//        let boundingBoxMin = vector_float3.init(convertMinPoint)
+//        let projectionMin = imageCameraFrame.projectPoint(boundingBoxMin, orientation: .portrait, viewportSize: imageSize)
 
-        
+//        let convertMaxPoint = sceneView.scene.rootNode.convertPosition(portal.boundingBox.max, from: portal)
+//        let boundingBoxMax = vector_float3.init(convertMaxPoint)
+//        let projectionMax = imageCameraFrame.projectPoint(boundingBoxMax, orientation: .portrait, viewportSize: imageSize)
+        let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
 
-        
-//        let portalRect = CGRect(x: projectionMin.x,
-//                                y: imageSize.height - (projectionMin.y - projectionMax.y) - projectionMax.y,
-//                                width: projectionMax.x - projectionMin.x,
-//                                height: projectionMin.y - projectionMax.y)
-
-        
-//        imageSize.height - projectionMaxRight.y + (projectionMax.y - projectionMaxRight.y)
-//        imageSize.height - projectionMin.y  + (projectionMinLeft.y - projectionMin.y)
-        
-//        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: CGPoint(x: projectionMinLeft.x, y: imageSize.height - projectionMin.y), //projectionMinLeft,
-//                                                            pointB: CGPoint(x: projectionMax.x, y: imageSize.height - projectionMaxRight.y),//projectionMax,
-//                                                            pointC: CGPoint(x: projectionMaxRight.x, y: imageSize.height - projectionMax.y),//projectionMaxRight,
-//                                                            pointD: CGPoint(x: projectionMin.x, y: imageSize.height - projectionMinLeft.y), //projectionMin,
-//                                                            in: imageSize)
         let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
-        
-        print(croppingShape)
         
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
@@ -238,26 +260,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         return croppingShape
     }
     
-//    private func updateBoundingBox(point: CGPoint, to imageBounds: CGSize) -> CGPoint {
-//        var newPoint: CGPoint = CGPoint.zero
-//        
-//        // Checks if x is in the image frame
-//        if point.x >= 0 && point.x <= imageBounds.width {
-//            newPoint.x = point.x
-//        } else if point.x > imageBounds.width {
-//            newPoint.x = imageBounds.width
-//        }
-//        
-//        // Checks if y is in the image frame
-//        if point.y >= 0 && point.y <= imageBounds.height {
-//            newPoint.y = point.y
-//        } else if point.y > imageBounds.height {
-//            newPoint.y = imageBounds.height
-//        }
-//        
-//        return newPoint
-//    }
-    
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
         path.move(to: pointA)
@@ -274,9 +276,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let context2 = UIGraphicsGetCurrentContext()!
         context2.saveGState()
         
+        let transformedImage = image.transformed(by: CGAffineTransform.init(scaleX: 1, y: -1)).transformed(by: CGAffineTransform.init(translationX: 0, y: image.extent.size.height))
+        
         // Set the clipping mask
         BezierPath.addClip()
-        let cgImage = context.createCGImage(image, from: image.extent)!
+        let cgImage = context.createCGImage(transformedImage, from: image.extent)!
         context2.draw(cgImage, in: image.extent)
         
         let maskedImage = UIGraphicsGetImageFromCurrentImageContext()!
@@ -364,7 +368,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.transparency = 0.05
+        material.transparency = 0.0
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
