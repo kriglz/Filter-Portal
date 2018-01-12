@@ -19,7 +19,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
-    private var filterIndex: Int = 0 {
+    private var filterIndex: Int = 1 {
         didSet {
             switch filterIndex {
             case 1:
@@ -180,10 +180,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 // Adds additional conditions for some filters.
                 switch portalCIFilter[filterIndex] {
                 case "CILineOverlay":
-                    ciFilter.setValue(2.0, forKey: kCIInputContrastKey)
-                    ciFilter.setValue(0.08, forKey: "inputThreshold")
+                    ciFilter.setValue(1.0, forKey: kCIInputContrastKey)
+                    ciFilter.setValue(0.2, forKey: "inputThreshold")
                     ciFilter.setValue(1, forKey: "inputEdgeIntensity")
-                    ciFilter.setValue(0.8, forKey: "inputNRSharpness")
+                    ciFilter.setValue(0.6, forKey: "inputNRSharpness")
                     ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
                 case "CIPointillize":
                     ciFilter.setValue(4.0, forKey: kCIInputRadiusKey)
