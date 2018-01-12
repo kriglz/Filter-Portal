@@ -16,10 +16,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalSize: CGSize = CGSize(width: 1, height: 2.5)
+    private let portalSize: CGSize = CGSize(width: 0.8, height: 1.5)
     
     private let context = CIContext()
     private let portalCIFilter: String = "CILineOverlay"
+    //"CIComicEffect"
+    //"CILineOverlay"
     //"CIPointillize"
     //"CIEdgeWork"
     //"CIEdges"
@@ -164,24 +166,42 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             
             // If camera is in non filtered side, looking to portal from outside:
             if !isInFilteredSide {
-                if let ciFilter = CIFilter(name: portalCIFilter) {
+                if let ciFilter = CIFilter(name: portalCIFilter){
                     ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-                    ciFilter.setValue(50.0, forKey: kCIInputContrastKey)
-
+//                    ciFilter.setValue(3.0, forKeyPath: kCIInputRadiusKey) // EdgeWork
+                    ciFilter.setValue(20.0, forKey: kCIInputContrastKey) // CILineOverlay
+//                    ciFilter.setValue(5.0, forKey: kCIInputRadiusKey) // CIPointillize
+//                    ciFilter.setValue(7.0, forKey: kCIInputRadiusKey) // CICrystallize
                     
-//                    ciFilter.setValue(5.0, forKey: kCIInputRadiusKey) //CIPointillize
-                    
-//                    ciFilter.setValue(7.0, forKey: kCIInputRadiusKey) //CICrystallize
-                    
-                    
+                
                     if let result = ciFilter.outputImage {
-//                        let new = 
-                        
-                        
-                        let newImage = result.composited(over: frameImage)
+                      
+                        if let ciColorFilter = CIFilter(name: "CIColorClamp"){
 
-                        let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
+                            
+                            ciColorFilter.setValue(croppedImage, forKeyPath: kCIInputImageKey)
+                            ciColorFilter.setValue(CIVector.init(x: 1, y: 1, z: 1, w: 0), forKeyPath: "inputMinComponents")
+                            ciColorFilter.setValue(CIVector.init(x: 1, y: 1, z: 1, w: 1), forKeyPath: "inputMaxComponents")
+                            
+//                            ciColorFilter.setValue(CIColor.white, forKeyPath: kCIInputColorKey)
+//                            ciColorFilter.setValue(1.0, forKeyPath: kCIInputIntensityKey)
+
+                            if let colorResult = ciColorFilter.outputImage {
+                        //, let minColorFilter = CIFilter(name: "CIMaximumComponent") {
+                                
+//                                minColorFilter.setValue(colorResult, forKeyPath: kCIInputImageKey)
+
+//                                if let minColorResult = minColorFilter.outputImage {
+                            
+                                
+                                    let whiteImage = result.composited(over: colorResult)
+                                    
+                                    let newImage = whiteImage.composited(over: frameImage)
+                                    let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                                    sceneView.scene.background.contents = frameCGImage
+//                                }
+                            }
+                        }
                     }
                 }
             // If camera is in filtered side, inside portal.
