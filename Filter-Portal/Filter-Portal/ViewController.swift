@@ -19,16 +19,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private let portalSize: CGSize = CGSize(width: 0.8, height: 1.5)
     
     private let context = CIContext()
-    private let portalCIFilter: String = "CILineOverlay"
-    //"CIComicEffect"
-    //"CILineOverlay"
-    //"CIPointillize"
     //"CIEdgeWork"
-    //"CIEdges"
-    //"CICrystallize"
-    //"CIColorPosterize"
-    //"CIColorInvert"
-    //"CIPhotoEffectTonal"
+    private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert", "CIPhotoEffectTonal"]
+    private var filterIndex: Int = 0
     private var isInFilteredSide = false
     
     override func viewDidLoad() {
@@ -70,9 +63,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
         // Adds tap gesture recognizer to add portal to the scene.
-        let tapHandler = #selector(handleTapGesture(byReactingTo:))
+        let tapHandler = #selector(handleTapGesture(recognizer:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
+        
+        // Adds swipe right gesture recognizer to change portal filters.
+        let swipeRightHandler = #selector(handleSwipeRightGesture(recognizer:))
+        let swipeRightRecognizer = UISwipeGestureRecognizer(target: self, action: swipeRightHandler)
+        swipeRightRecognizer.direction = .right
+        self.view.addGestureRecognizer(swipeRightRecognizer)
+        
+        // Adds swipe gesture recognizer to change portal filters.
+        let swipeLeftHandler = #selector(handleSwipeLeftGesture(recognizer:))
+        let swipeLeftRecognizer = UISwipeGestureRecognizer(target: self, action: swipeLeftHandler)
+        swipeLeftRecognizer.direction = .left
+        self.view.addGestureRecognizer(swipeLeftRecognizer)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -164,49 +169,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
             
-            // If camera is in non filtered side, looking to portal from outside:
-            if !isInFilteredSide {
-                if let ciFilter = CIFilter(name: portalCIFilter){
-                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-//                    ciFilter.setValue(3.0, forKeyPath: kCIInputRadiusKey) // EdgeWork
-                    ciFilter.setValue(20.0, forKey: kCIInputContrastKey) // CILineOverlay
-//                    ciFilter.setValue(5.0, forKey: kCIInputRadiusKey) // CIPointillize
-//                    ciFilter.setValue(7.0, forKey: kCIInputRadiusKey) // CICrystallize
-                    
+            if let ciFilter = CIFilter(name: portalCIFilter[filterIndex]){
                 
-                    if let result = ciFilter.outputImage {
-                      
-                        if let ciColorFilter = CIFilter(name: "CIColorClamp"){
-
-                            
-                            ciColorFilter.setValue(croppedImage, forKeyPath: kCIInputImageKey)
-                            ciColorFilter.setValue(CIVector.init(x: 1, y: 1, z: 1, w: 0), forKeyPath: "inputMinComponents")
-                            ciColorFilter.setValue(CIVector.init(x: 1, y: 1, z: 1, w: 1), forKeyPath: "inputMaxComponents")
-                            
-//                            ciColorFilter.setValue(CIColor.white, forKeyPath: kCIInputColorKey)
-//                            ciColorFilter.setValue(1.0, forKeyPath: kCIInputIntensityKey)
-
-                            if let colorResult = ciColorFilter.outputImage {
-                        //, let minColorFilter = CIFilter(name: "CIMaximumComponent") {
-                                
-//                                minColorFilter.setValue(colorResult, forKeyPath: kCIInputImageKey)
-
-//                                if let minColorResult = minColorFilter.outputImage {
-                            
-                                
-                                    let whiteImage = result.composited(over: colorResult)
-                                    
-                                    let newImage = whiteImage.composited(over: frameImage)
-                                    let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                                    sceneView.scene.background.contents = frameCGImage
-//                                }
-                            }
-                        }
-                    }
+                // Adds additional conditions for some filters.
+                switch portalCIFilter[filterIndex] {
+                case "CIEdgeWork":
+                    ciFilter.setValue(3.0, forKeyPath: kCIInputRadiusKey)
+                case "CILineOverlay":
+                    ciFilter.setValue(20.0, forKey: kCIInputContrastKey)
+                case "CIPointillize":
+                    ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
+                case "CICrystallize":
+                    ciFilter.setValue(7.0, forKey: kCIInputRadiusKey)
+                default:
+                    break
                 }
-            // If camera is in filtered side, inside portal.
-            } else {
-                if let ciFilter = CIFilter(name: portalCIFilter) {
+                
+            // If camera is in non filtered side, looking to portal from outside:
+                if !isInFilteredSide {
+                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    
+                    if let imageResult = ciFilter.outputImage {
+                        var newImage = imageResult
+                    
+                        if let background = backgroundImage(for: croppedImage) {
+                            let croppedWithBackgroundImage = imageResult.composited(over: background)
+                            newImage = croppedWithBackgroundImage.composited(over: frameImage)
+                        }
+                        
+                        let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                        sceneView.scene.background.contents = frameCGImage
+                    }
+                // If camera is in filtered side, inside portal.
+                } else {
                     ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
@@ -218,6 +213,22 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             context.clearCaches()
         }
+    }
+    
+    private func backgroundImage(for croppedImage: CIImage) -> CIImage? {
+        guard filterIndex == 1 else { return nil }
+        
+        // Adding color background for filters which make cropped image transparent.
+        if let ciColorFilter = CIFilter(name: "CIColorClamp"){
+            ciColorFilter.setValue(croppedImage, forKeyPath: kCIInputImageKey)
+            ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 0), forKeyPath: "inputMinComponents")
+            ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 1), forKeyPath: "inputMaxComponents")
+            
+            if let backgroundImageResult = ciColorFilter.outputImage {
+                return backgroundImageResult
+            }
+        }
+        return nil
     }
     
     /// Converts and then projects node points into camera captured image plane.
@@ -355,11 +366,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
     
-    @objc private func handleTapGesture(byReactingTo: UITapGestureRecognizer){
-        let touchPoint = byReactingTo.location(in: self.view)
+    @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
+        let touchPoint = recognizer.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
         removePlaneNodes()
+    }
+    
+    @objc private func handleSwipeRightGesture(recognizer: UISwipeGestureRecognizer){
+        if filterIndex < portalCIFilter.count {
+            filterIndex += 1
+        } else {
+            filterIndex = 0
+        }
+    }
+    
+    @objc private func handleSwipeLeftGesture(recognizer: UISwipeGestureRecognizer){
+        if filterIndex > 0 {
+            filterIndex -= 1
+        } else {
+            filterIndex = portalCIFilter.count - 1
+        }
     }
     
     private func removePlaneNodes(){
