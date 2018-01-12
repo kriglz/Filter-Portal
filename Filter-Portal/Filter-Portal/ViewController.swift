@@ -34,7 +34,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-    private var isInFilteredSide = true
+    private var isInFilteredSide = false
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
 
@@ -266,7 +266,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     private func scale(image: CIImage, by factor: CGFloat) -> CIImage {
-                
+        
         let scaleFilter = CIFilter(name: "CIAffineTransform")!
         scaleFilter.setValue(image, forKey: kCIInputImageKey)
         scaleFilter.setValue(CGAffineTransform.init(scaleX: factor, y: factor), forKey: "inputTransform")
@@ -336,12 +336,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
-        path.move(to: pointA)
-        path.addLine(to: pointB)
-        path.addLine(to: pointC)
-        path.addLine(to: pointD)
-        path.close()
         
+        /// Mid point of AB line.
+        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
+                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
+        /// Mid point of BC line.
+        let pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+        /// Mid point of CD line.
+        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
+                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
+        /// Mid point of DA line.
+        let pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+        
+        path.move(to: pointAB)
+        path.addQuadCurve(to: pointBC, controlPoint: pointB)
+        path.addQuadCurve(to: pointCD, controlPoint: pointC)
+        path.addQuadCurve(to: pointDA, controlPoint: pointD)
+        path.addQuadCurve(to: pointAB, controlPoint: pointA)
+        
+//        path.move(to: pointA)
+//        path.addLine(to: pointB)
+//        path.addLine(to: pointC)
+//        path.addLine(to: pointD)
+        
+        path.close()
         return path
     }
     
@@ -460,7 +480,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
-        material.transparency = 0.0
+        material.transparency = 0.05
         material.isDoubleSided = true
         portalPlane.materials = [material]
         let portal = SCNNode(geometry: portalPlane)
