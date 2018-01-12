@@ -18,7 +18,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private let portalSize: CGSize = CGSize(width: 0.8, height: 1.5)
     
     private let context = CIContext()
-    private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
+    private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIGaussianBlur", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
     private var filterIndex: Int = 0 {
         didSet {
             switch filterIndex {
@@ -188,8 +188,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 ciFilter.setValue(1, forKey: "inputEdgeIntensity")
                 ciFilter.setValue(0.6, forKey: "inputNRSharpness")
                 ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
-            case "CIPointillize":
-                ciFilter.setValue(4.0, forKey: kCIInputRadiusKey)
+            case "CIGaussianBlur":
+                ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
             case "CICrystallize":
                 ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
             default:
