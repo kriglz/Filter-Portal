@@ -9,7 +9,6 @@
 import UIKit
 import SceneKit
 import ARKit
-import SpriteKit
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
@@ -22,7 +21,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     //"CIEdgeWork"
     private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert", "CIPhotoEffectTonal"]
     private var filterIndex: Int = 0
-    private var isInFilteredSide = false
+    private var isInFilteredSide = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -189,16 +188,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 if !isInFilteredSide {
                     ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
                     
-                    if let imageResult = ciFilter.outputImage {
-                        var newImage = imageResult
+                    if let result = ciFilter.outputImage {
                     
                         if let background = backgroundImage(for: croppedImage) {
-                            let croppedWithBackgroundImage = imageResult.composited(over: background)
-                            newImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            let croppedWithBackgroundImage = result.composited(over: background)
+                            let newImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                        } else {
+                            let newImage = result.composited(over: frameImage)
+                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
                         }
-                        
-                        let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
                     }
                 // If camera is in filtered side, inside portal.
                 } else {
@@ -217,6 +218,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private func backgroundImage(for croppedImage: CIImage) -> CIImage? {
         guard filterIndex == 1 else { return nil }
+        
+        print("makes a backgroundpicture")
         
         // Adding color background for filters which make cropped image transparent.
         if let ciColorFilter = CIFilter(name: "CIColorClamp"){
