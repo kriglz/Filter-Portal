@@ -19,13 +19,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
-    private var filterIndex: Int = 1 {
+    private var filterIndex: Int = 0 {
         didSet {
             switch filterIndex {
             case 1:
                 shouldBeScaled = true
                 scaleFactor = 4
-            case 2, 4, 5:
+            case 2, 4:
                 shouldBeScaled = true
                 scaleFactor = 2
             default:
@@ -34,7 +34,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-    private var isInFilteredSide = false
+    private var isInFilteredSide = true
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
 
@@ -229,18 +229,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     }
                 // If camera is in filtered side, inside portal.
                 } else {
-                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    if shouldBeScaled {
+                        let workImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                    } else {
+                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    }
                     
                     if let result = ciFilter.outputImage {
                         
                         if let background = backgroundImage(for: frameImage) {
-                            let croppedWithBackgroundImage = result.composited(over: background)
+                            var croppedWithBackgroundImage = result.composited(over: background)
+                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
                             let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
                             let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                         } else {
-                            let newImage = croppedImage.composited(over: result)
-                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            
+                            var workImage = CIImage()
+                            
+                            if shouldBeScaled {
+                                workImage = scale(image: result, by: scaleFactor)
+                                workImage = croppedImage.composited(over: workImage)
+                            } else {
+                                workImage = croppedImage.composited(over: result)
+                            }
+                            
+                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                         }
                     }
@@ -251,6 +266,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     private func scale(image: CIImage, by factor: CGFloat) -> CIImage {
+                
         let scaleFilter = CIFilter(name: "CIAffineTransform")!
         scaleFilter.setValue(image, forKey: kCIInputImageKey)
         scaleFilter.setValue(CGAffineTransform.init(scaleX: factor, y: factor), forKey: "inputTransform")
