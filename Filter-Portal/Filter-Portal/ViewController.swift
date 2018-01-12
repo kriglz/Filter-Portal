@@ -163,10 +163,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 
                 // Adds additional conditions for some filters.
                 switch portalCIFilter[filterIndex] {
-                case "CIEdgeWork":
-                    ciFilter.setValue(3.0, forKeyPath: kCIInputRadiusKey)
                 case "CILineOverlay":
-                    ciFilter.setValue(20.0, forKey: kCIInputContrastKey)
+                    ciFilter.setValue(5.0, forKey: kCIInputContrastKey)
+                    ciFilter.setValue(0.08, forKey: "inputThreshold")
+                    ciFilter.setValue(1, forKey: "inputEdgeIntensity")
+                    ciFilter.setValue(0.8, forKey: "inputNRSharpness")
+                    ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
+
                 case "CIPointillize":
                     ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
                 case "CICrystallize":
@@ -177,17 +180,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 
             // If camera is in non filtered side, looking to portal from outside:
                 if !isInFilteredSide {
-                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    
+                    
+                    func scale(image: CIImage, by factor: CGFloat) -> CIImage {
+                        let scaleFilter = CIFilter(name: "CIAffineTransform")!
+                        scaleFilter.setValue(image, forKey: kCIInputImageKey)
+                        scaleFilter.setValue(CGAffineTransform.init(scaleX: factor, y: factor), forKey: "inputTransform")
+                        let scaledImage = scaleFilter.outputImage!
+                        return scaledImage
+                    }
+                   
+                    let scaledDownImage = scale(image: croppedImage, by: 1/3)
+                    
+                    ciFilter.setValue(scaledDownImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
-                    
-                        if let background = backgroundImage(for: croppedImage) {
-                            let croppedWithBackgroundImage = result.composited(over: background)
+                        
+                        if let background = backgroundImage(for: scaledDownImage) {
+                            var croppedWithBackgroundImage = result.composited(over: background)
+                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: 3)
+
                             let newImage = croppedWithBackgroundImage.composited(over: frameImage)
                             let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                         } else {
-                            let newImage = result.composited(over: frameImage)
+                            var newImage = scale(image: result, by: 3)
+
+                            newImage = newImage.composited(over: frameImage)
                             let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                         }
@@ -216,9 +235,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     private func backgroundImage(for croppedImage: CIImage) -> CIImage? {
-        guard filterIndex == 1 else { return nil }
-        
-        print("makes a backgroundpicture")
+        guard filterIndex == 1 || filterIndex == 3 else { return nil }
         
         // Adding color background for filters which make cropped image transparent.
         if let ciColorFilter = CIFilter(name: "CIColorClamp"){
