@@ -34,7 +34,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-    private var isInFilteredSide = false
+    private var isInFilteredSide = true
+    private var isPortalVisible = true
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
 
@@ -167,10 +168,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
     
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
+
+        // Adds filters to the image only if portal has been created.
+        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+            applyFilter(to: portal, for: frameImage, ofCamera: frame)
+        }
+    }
+    
     private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame){
-        let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-        let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
-        
         if let ciFilter = CIFilter(name: portalCIFilter[filterIndex]){
             
             // Adds additional conditions for some filters.
@@ -189,83 +196,121 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 break
             }
             
-            // If camera is in non filtered side, looking to portal from outside:
-            if !isInFilteredSide {
-                
-                var workImage = CIImage()
-                
-                if shouldBeScaled {
-                    workImage = scale(image: croppedImage, by: 1/scaleFactor)
-                    ciFilter.setValue(workImage, forKey: kCIInputImageKey)
-                } else {
-                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-                }
-                
-                if let result = ciFilter.outputImage {
+            if let cameraView = sceneView.pointOfView {
+                isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
+            }
+            
+            if isPortalVisible {
+                // Gets shape of cropping image.
+                let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+                // Gets cropped image.
+                let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
+            
+                // If camera is in non filtered side, looking to portal from outside:
+                if !isInFilteredSide {
                     
-                    if let background = backgroundImage(for: workImage) {
-                        // This filter image needs to be scaled always.
-                        var croppedWithBackgroundImage = result.composited(over: background)
-                        croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                        workImage = croppedWithBackgroundImage.composited(over: frameImage)
-                        let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
+                    var workImage = CIImage()
+                    
+                    if shouldBeScaled {
+                        workImage = scale(image: croppedImage, by: 1/scaleFactor)
+                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
                     } else {
+                        ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    }
+                    
+                    if let result = ciFilter.outputImage {
                         
-                        if shouldBeScaled {
-                            workImage = scale(image: result, by: scaleFactor)
-                            workImage = workImage.composited(over: frameImage)
+                        if let background = backgroundImage(for: workImage) {
+                            // This filter image needs to be scaled always.
+                            var croppedWithBackgroundImage = result.composited(over: background)
+                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
+                            workImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
                         } else {
-                            workImage = result.composited(over: frameImage)
+                            
+                            if shouldBeScaled {
+                                workImage = scale(image: result, by: scaleFactor)
+                                workImage = workImage.composited(over: frameImage)
+                            } else {
+                                workImage = result.composited(over: frameImage)
+                            }
+                            
+                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
                         }
+                    }
+                    
+                // If camera is in filtered side, inside portal.
+                } else {
+                    if shouldBeScaled {
+                        let workImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                    } else {
+                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    }
+                    
+                    if let result = ciFilter.outputImage {
                         
-                        let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
+                        if let background = backgroundImage(for: frameImage) {
+                            var croppedWithBackgroundImage = result.composited(over: background)
+                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
+                            let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
+                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
+                        } else {
+                            
+                            var workImage = CIImage()
+                            
+                            if shouldBeScaled {
+                                workImage = scale(image: result, by: scaleFactor)
+                                workImage = croppedImage.composited(over: workImage)
+                            } else {
+                                workImage = croppedImage.composited(over: result)
+                            }
+                            
+                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
+                        }
                     }
                 }
-                // If camera is in filtered side, inside portal.
             } else {
-                if shouldBeScaled {
-                    let workImage = scale(image: frameImage, by: 1/scaleFactor)
-                    ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                if !isInFilteredSide {
+                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
+                    sceneView.scene.background.contents = frameCGImage
+                    context.clearCaches()
                 } else {
-                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                }
-                
-                if let result = ciFilter.outputImage {
-                    
-                    if let background = backgroundImage(for: frameImage) {
-                        var croppedWithBackgroundImage = result.composited(over: background)
-                        croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                        let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
-                        let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
-                    } else {
-                        
-                        var workImage = CIImage()
-                        
-                        if shouldBeScaled {
-                            workImage = scale(image: result, by: scaleFactor)
-                            workImage = croppedImage.composited(over: workImage)
-                        } else {
-                            workImage = croppedImage.composited(over: result)
+                    if shouldBeScaled {
+                        var workImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                        if let result = ciFilter.outputImage {
+                            
+                            if let background = backgroundImage(for: workImage) {
+                                workImage = result.composited(over: background)
+                            } else {
+                                workImage = result
+                            }
+                            
+                            workImage = scale(image: workImage, by: scaleFactor)
+                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
                         }
+                    } else {
+                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                         
-                        let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
+                        if let result = ciFilter.outputImage {
+                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
+                        }
                     }
                 }
             }
-        }
-        context.clearCaches()
-    }
-    
-    func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-
-        // Adds filters to the image only if portal has been created.
-        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            applyFilter(to: portal, for: frameImage, ofCamera: frame)
         }
     }
     
@@ -334,6 +379,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
             }
         }
+        
         return croppingShape
     }
     
