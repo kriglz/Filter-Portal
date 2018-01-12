@@ -18,15 +18,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private let portalSize: CGSize = CGSize(width: 0.8, height: 1.5)
     
     private let context = CIContext()
-    //"CIEdgeWork"
-    private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert", "CIPhotoEffectTonal"]
+    private let portalCIFilter: [String] = ["CIPhotoEffectTonal", "CILineOverlay", "CIPointillize", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
     private var filterIndex: Int = 0
-    private var isInFilteredSide = true
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-    }
+    private var isInFilteredSide = false
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -42,7 +36,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 determine whether to show UI for launching AR experiences.
             """) // For details, see https://developer.apple.com/documentation/arkit
         }
-        
         
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
@@ -83,8 +76,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         super.viewWillDisappear(animated)
         // Pause the view's session
         sceneView.session.pause()
-        NotificationCenter.default.removeObserver(self)
-        UIDevice.current.endGeneratingDeviceOrientationNotifications()
     }
     
     
@@ -206,9 +197,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     
                     if let result = ciFilter.outputImage {
-                        let newImage = croppedImage.composited(over: result)
-                        let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                        sceneView.scene.background.contents = frameCGImage
+                        
+                        if let background = backgroundImage(for: frameImage) {
+                            let croppedWithBackgroundImage = result.composited(over: background)
+                            let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
+                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                        } else {
+                            let newImage = croppedImage.composited(over: result)
+                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                        }
                     }
                 }
             }
@@ -377,7 +376,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @objc private func handleSwipeRightGesture(recognizer: UISwipeGestureRecognizer){
-        if filterIndex < portalCIFilter.count {
+        if filterIndex < portalCIFilter.count - 1 {
             filterIndex += 1
         } else {
             filterIndex = 0
