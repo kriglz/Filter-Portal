@@ -15,7 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalSize: CGSize = CGSize(width: 0.8, height: 1.5)
+    private let portalSize: CGSize = CGSize(width: 0.6, height: 0.8)
     
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIGaussianBlur", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
@@ -359,20 +359,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let projectionMaxRight = getProjection(of: portal, maxRightPoint, in: imageSize, in: imageCameraFrame)
         let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
         let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
-
+        
+        
         /// Defines cropping shape, based on portal projection to the camera captured image.
         let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
         
         // Alters between filter and nonfilter enviroment mode, based on camera position.
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z < 0 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && abs(camera.position.z - portal.position.z) < 0.02 {
                     isInFilteredSide = true
                 } else {
                     isInFilteredSide = false
                 }
             } else {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && camera.position.z - portal.position.z > 0 {
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && abs(camera.position.z - portal.position.z) < 0.02 {
                     isInFilteredSide = false
                 } else {
                     isInFilteredSide = true
@@ -391,20 +392,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
                               y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
         /// Mid point of BC line.
-        let pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
                               y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+        
+        if pointBC.y < -200 {
+            pointBC.y = -200
+        }
+        
+        
         /// Mid point of CD line.
         let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
                               y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
         /// Mid point of DA line.
-        let pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
                               y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
         
+        if pointDA.y < -200 {
+            pointDA.y = -200
+        }
+        
+        
+
         path.move(to: pointAB)
         path.addQuadCurve(to: pointBC, controlPoint: pointB)
         path.addQuadCurve(to: pointCD, controlPoint: pointC)
         path.addQuadCurve(to: pointDA, controlPoint: pointD)
         path.addQuadCurve(to: pointAB, controlPoint: pointA)
+
         
 //        path.move(to: pointA)
 //        path.addLine(to: pointB)
@@ -544,7 +558,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
             
             item.position = hitPosition
-            item.position.y += Float(portalSize.height/2)
+            item.position.y += Float(portalSize.height)
             if let camera = sceneView.pointOfView {
                 // Set plane position to face the camera.
                 item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
