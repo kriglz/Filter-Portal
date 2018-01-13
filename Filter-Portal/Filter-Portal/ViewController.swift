@@ -15,7 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
-    private let portalSize: CGSize = CGSize(width: 0.6, height: 0.8)
+    private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
     
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIGaussianBlur", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
@@ -75,6 +75,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let tapHandler = #selector(handleTapGesture(recognizer:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
+        
+        // Adds pinch gesture to scale the node.
+        let pinchHandler = #selector(handlePinchGesture(recognizer:))
+        let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
+        self.view.addGestureRecognizer(pinchRecognizer)
         
         // Adds swipe right gesture recognizer to change portal filters.
         let swipeRightHandler = #selector(handleSwipeRightGesture(recognizer:))
@@ -360,29 +365,45 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
         let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
         
-        
         /// Defines cropping shape, based on portal projection to the camera captured image.
         let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
         
         // Alters between filter and nonfilter enviroment mode, based on camera position.
         if let camera = sceneView.pointOfView {
             if !isInFilteredSide {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && abs(camera.position.z - portal.position.z) < 0.02 {
-                    isInFilteredSide = true
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height {
+                    
+                    if !didEnteredPortal {
+                        if camera.position.z - portal.position.z >= 0 {
+                            isInFilteredSide = false
+                        } else {
+                            isInFilteredSide = true
+                            didEnteredPortal = true
+                        }
+                    }
                 } else {
-                    isInFilteredSide = false
+                    didEnteredPortal = false
                 }
             } else {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height && abs(camera.position.z - portal.position.z) < 0.02 {
-                    isInFilteredSide = false
+                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height {
+                    
+                    if !didEnteredPortal {
+                        if camera.position.z - portal.position.z >= 0 {
+                            isInFilteredSide = true
+                        } else {
+                            isInFilteredSide = false
+                            didEnteredPortal = true
+                        }
+                    }
                 } else {
-                    isInFilteredSide = true
+                    didEnteredPortal = false
                 }
             }
         }
-        
         return croppingShape
     }
+    
+    private var didEnteredPortal: Bool = false
     
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
@@ -516,6 +537,24 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         removePlaneNodes()
     }
     
+    @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
+        switch recognizer.state {
+        case .changed, .ended:
+            
+            if isPortalVisible {
+                for child in sceneView.scene.rootNode.childNodes {
+                    if child.name == "portal" {
+                        child.scale.x *= Float(recognizer.scale)
+                        child.scale.y *= Float(recognizer.scale)
+                        recognizer.scale = 1                        
+                    }
+                }
+            }
+        default:
+            break
+        }
+    }
+    
     @objc private func handleSwipeRightGesture(recognizer: UISwipeGestureRecognizer){
         if filterIndex < portalCIFilter.count - 1 {
             filterIndex += 1
@@ -558,7 +597,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
             
             item.position = hitPosition
-            item.position.y += Float(portalSize.height)
+            item.position.y += Float(portalSize.height * 1.5)
             if let camera = sceneView.pointOfView {
                 // Set plane position to face the camera.
                 item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
