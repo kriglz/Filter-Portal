@@ -182,7 +182,24 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame){
+    private func compare(_ mask: UIBezierPath, with sceneFrame: CGRect) -> Bool {
+        let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
+        let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
+        let sceneFrameLeftBottompPoint = CGPoint(x: sceneFrame.origin.x, y: sceneFrame.size.height)
+
+        if mask.contains(sceneFrame.origin) && mask.contains(sceneFrameRightTopPoint)
+            && mask.contains(sceneFrameRightBottomPoint) && mask.contains(sceneFrameLeftBottompPoint){
+            return true
+        }
+        return false
+    }
+    
+    private func getTheSideOfPointOfView() {
+        
+        isInFilteredSide = true
+    }
+    
+    private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
         if let ciFilter = CIFilter(name: portalCIFilter[filterIndex]){
             
             // Adds additional conditions for some filters.
@@ -208,6 +225,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             if isPortalVisible {
                 // Gets shape of cropping image.
                 let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+                
+                let isPortalFrameBiggerThanCameras: Bool = compare(cropShape, with: frameImage.extent)
+                
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
             
@@ -368,42 +388,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         /// Defines cropping shape, based on portal projection to the camera captured image.
         let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
         
-        // Alters between filter and nonfilter enviroment mode, based on camera position.
-        if let camera = sceneView.pointOfView {
-            if !isInFilteredSide {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height {
-                    
-                    if !didEnteredPortal {
-                        if camera.position.z - portal.position.z >= 0 {
-                            isInFilteredSide = false
-                        } else {
-                            isInFilteredSide = true
-                            didEnteredPortal = true
-                        }
-                    }
-                } else {
-                    didEnteredPortal = false
-                }
-            } else {
-                if projectionMin.x <= 0 && projectionMax.y <= 0 && projectionMax.x > imageSize.width && projectionMin.y > imageSize.height {
-                    
-                    if !didEnteredPortal {
-                        if camera.position.z - portal.position.z >= 0 {
-                            isInFilteredSide = true
-                        } else {
-                            isInFilteredSide = false
-                            didEnteredPortal = true
-                        }
-                    }
-                } else {
-                    didEnteredPortal = false
-                }
-            }
-        }
         return croppingShape
     }
-    
-    private var didEnteredPortal: Bool = false
     
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
@@ -546,7 +532,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     if child.name == "portal" {
                         child.scale.x *= Float(recognizer.scale)
                         child.scale.y *= Float(recognizer.scale)
-                        recognizer.scale = 1                        
+                        recognizer.scale = 1
                     }
                 }
             }
