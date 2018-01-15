@@ -182,24 +182,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func compare(_ mask: UIBezierPath, with sceneFrame: CGRect) -> Bool {
-        let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
-        let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
-        let sceneFrameLeftBottompPoint = CGPoint(x: sceneFrame.origin.x, y: sceneFrame.size.height)
-
-        if mask.contains(sceneFrame.origin) && mask.contains(sceneFrameRightTopPoint)
-            && mask.contains(sceneFrameRightBottomPoint) && mask.contains(sceneFrameLeftBottompPoint){
-            return true
-        }
-        return false
-    }
-    
+    /// Decides if point of view is in filtered side or non filtered side.
     private func getTheSide() -> Bool {
     
-//        isInFilteredSide = true
         return false
     }
     
+    /// Applies selected filters to the portal / scene.
     private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
         if let ciFilter = CIFilter(name: portalCIFilter[filterIndex]){
             
@@ -219,13 +208,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 break
             }
             
+            // Calculates if portal node is in camera's frustum.
             if let cameraView = sceneView.pointOfView {
                 isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
             }
             
-            // Gets shape of cropping image.
+            // Defines shape of cropping image.
             let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+            // Defines relative size of portal to visible scene.
             let isPortalFrameBiggerThanCameras: Bool = compare(cropShape, with: frameImage.extent)
+            // Defines point of view standing position.
             let isInFilteredSide = getTheSide()
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
@@ -234,54 +226,50 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
                 
-                // If camera is in non filtered side, looking to portal from outside:
+                // If camera is in non filtered side - looking to portal from outside.
                 if !isInFilteredSide {
-                    
-                    var workImage = CIImage()
+                    var tempImage = CIImage()
                     
                     if shouldBeScaled {
-                        workImage = scale(image: croppedImage, by: 1/scaleFactor)
-                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                        tempImage = scale(image: croppedImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
                     } else {
                         ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
                     }
                     
                     if let result = ciFilter.outputImage {
-                        
-                        if let background = backgroundImage(for: workImage) {
-                            // This filter image needs to be scaled always.
+                        if let background = backgroundImage(for: tempImage) {
                             var croppedWithBackgroundImage = result.composited(over: background)
+                            // This filter image needs to be scaled down always.
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                            workImage = croppedWithBackgroundImage.composited(over: frameImage)
-                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            tempImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                             context.clearCaches()
                         } else {
-                            
                             if shouldBeScaled {
-                                workImage = scale(image: result, by: scaleFactor)
-                                workImage = workImage.composited(over: frameImage)
+                                tempImage = scale(image: result, by: scaleFactor)
+                                tempImage = tempImage.composited(over: frameImage)
                             } else {
-                                workImage = result.composited(over: frameImage)
+                                tempImage = result.composited(over: frameImage)
                             }
                             
-                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                             context.clearCaches()
                         }
                     }
                     
-                    // If camera is in filtered side, inside portal.
+                // If camera is in filtered side, inside portal.
                 } else {
                     if shouldBeScaled {
-                        let workImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                        let tempImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     }
                     
                     if let result = ciFilter.outputImage {
-                        
                         if let background = backgroundImage(for: frameImage) {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
@@ -290,17 +278,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                             sceneView.scene.background.contents = frameCGImage
                             context.clearCaches()
                         } else {
-                            
-                            var workImage = CIImage()
+                            var tempImage = CIImage()
                             
                             if shouldBeScaled {
-                                workImage = scale(image: result, by: scaleFactor)
-                                workImage = croppedImage.composited(over: workImage)
+                                tempImage = scale(image: result, by: scaleFactor)
+                                tempImage = croppedImage.composited(over: tempImage)
                             } else {
-                                workImage = croppedImage.composited(over: result)
+                                tempImage = croppedImage.composited(over: result)
                             }
                             
-                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                             context.clearCaches()
                         }
@@ -316,18 +303,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     context.clearCaches()
                 } else {
                     if shouldBeScaled {
-                        var workImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(workImage, forKey: kCIInputImageKey)
+                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
                         if let result = ciFilter.outputImage {
                             
-                            if let background = backgroundImage(for: workImage) {
-                                workImage = result.composited(over: background)
+                            if let background = backgroundImage(for: tempImage) {
+                                tempImage = result.composited(over: background)
                             } else {
-                                workImage = result
+                                tempImage = result
                             }
                             
-                            workImage = scale(image: workImage, by: scaleFactor)
-                            let frameCGImage = context.createCGImage(workImage, from: frameImage.extent)
+                            tempImage = scale(image: tempImage, by: scaleFactor)
+                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
                             sceneView.scene.background.contents = frameCGImage
                             context.clearCaches()
                         }
@@ -343,6 +330,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
             }
         }
+    }
+    
+    private func compare(_ mask: UIBezierPath, with sceneFrame: CGRect) -> Bool {
+        let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
+        let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
+        let sceneFrameLeftBottompPoint = CGPoint(x: sceneFrame.origin.x, y: sceneFrame.size.height)
+        
+        if mask.contains(sceneFrame.origin) && mask.contains(sceneFrameRightTopPoint)
+            && mask.contains(sceneFrameRightBottomPoint) && mask.contains(sceneFrameLeftBottompPoint){
+            return true
+        }
+        return false
     }
     
     private func scale(image: CIImage, by factor: CGFloat) -> CIImage {
