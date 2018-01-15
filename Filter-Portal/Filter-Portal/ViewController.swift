@@ -34,7 +34,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-    private var isInFilteredSide = true
+//    private var isInFilteredSide = true
     private var isPortalVisible = true
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
@@ -194,9 +194,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         return false
     }
     
-    private func getTheSideOfPointOfView() {
-        
-        isInFilteredSide = true
+    private func getTheSide() -> Bool {
+    
+//        isInFilteredSide = true
+        return false
     }
     
     private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
@@ -222,15 +223,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
             }
             
-            if isPortalVisible {
-                // Gets shape of cropping image.
-                let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-                
-                let isPortalFrameBiggerThanCameras: Bool = compare(cropShape, with: frameImage.extent)
+            // Gets shape of cropping image.
+            let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
+            let isPortalFrameBiggerThanCameras: Bool = compare(cropShape, with: frameImage.extent)
+            let isInFilteredSide = getTheSide()
+            
+            // Portal frame is not bigger than camera's frame - portal edges are visible.
+            if isPortalVisible && !isPortalFrameBiggerThanCameras {
                 
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
-            
+                
                 // If camera is in non filtered side, looking to portal from outside:
                 if !isInFilteredSide {
                     
@@ -268,7 +271,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                         }
                     }
                     
-                // If camera is in filtered side, inside portal.
+                    // If camera is in filtered side, inside portal.
                 } else {
                     if shouldBeScaled {
                         let workImage = scale(image: frameImage, by: 1/scaleFactor)
@@ -303,7 +306,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                         }
                     }
                 }
-            } else {
+                
+            // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
+            } else if isPortalVisible && isPortalFrameBiggerThanCameras || !isPortalVisible {
+                
                 if !isInFilteredSide {
                     let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
                     sceneView.scene.background.contents = frameCGImage
