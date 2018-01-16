@@ -13,6 +13,11 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func resetScene(_ sender: UIButton) {
+        for child in sceneView.scene.rootNode.childNodes {
+            if child.name == "portal" {
+                child.removeFromParentNode()
+            }
+        }
     }
     
     @IBAction func changeFilter(_ sender: UIButton) {
@@ -183,6 +188,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Adds filters to the image only if portal has been created.
         if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
             applyFilter(to: portal, for: frameImage, ofCamera: frame)
+        } else {
+            let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
+            sceneView.scene.background.contents = frameCGImage
+            context.clearCaches()
         }
     }
     
@@ -191,10 +200,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     /// Decides if point of view is in filtered side or non filtered side.
     private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
         
-        print(isPortalVisible, "isPortalVisible")
-        print(cameraPoint.position.z - portal.position.z)
-        print(didEnterPortal, "didEnterPortal")
-        print(isInFilteredSide, "isInFilteredSide\n")
+//        print(isPortalVisible, "isPortalVisible")
+//        print(cameraPoint.position.z - portal.position.z)
+//        print(didEnterPortal, "didEnterPortal")
+//        print(isInFilteredSide, "isInFilteredSide\n")
 
         guard !didEnterPortal else {
             if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
@@ -588,7 +597,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let touchPoint = recognizer.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
-        removePlaneNodes()
+//        hidePlaneNodes()
     }
     
     @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
@@ -609,11 +618,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func removePlaneNodes(){
+    private func hidePlaneNodes(){
         // Removes plane child nodes when portal is added.
         for child in sceneView.scene.rootNode.childNodes {
             if child.name == "plane" {
-                child.removeFromParentNode()
+                child.isHidden = true
             }
         }
     }
