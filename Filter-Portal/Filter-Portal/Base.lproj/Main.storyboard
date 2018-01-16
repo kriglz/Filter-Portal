@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13770" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
-    <device id="retina4_7" orientation="portrait">
+    <device id="retina4_0" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
@@ -16,39 +16,15 @@
             <objects>
                 <viewController id="BV1-FR-VrT" customClass="ViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="aUX-A6-b9h">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="C9T-vs-BRq">
-                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <connections>
                                     <outlet property="delegate" destination="BV1-FR-VrT" id="H3F-Xu-99a"/>
                                 </connections>
                             </arscnView>
-                            <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
-                                <rect key="frame" x="16" y="612" width="58" height="35"/>
-                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="BOu-hj-fzL">
-                                    <rect key="frame" x="0.0" y="0.0" width="58" height="35"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                    <subviews>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gBq-mx-UQs">
-                                            <rect key="frame" x="8" y="6" width="42" height="21"/>
-                                            <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
-                                            <nil key="textColor"/>
-                                            <nil key="highlightedColor"/>
-                                        </label>
-                                    </subviews>
-                                    <constraints>
-                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="bottom" secondItem="BOu-hj-fzL" secondAttribute="bottomMargin" id="IeB-Ts-aOB"/>
-                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="leading" secondItem="BOu-hj-fzL" secondAttribute="leading" constant="8" id="ZwV-sV-hpQ"/>
-                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="trailing" secondItem="BOu-hj-fzL" secondAttribute="trailingMargin" id="nfm-0E-R3m"/>
-                                    </constraints>
-                                </view>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="35" id="ExD-ck-UyO"/>
-                                </constraints>
-                                <blurEffect style="light"/>
-                            </visualEffectView>
                             <button opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SAc-bW-iOG">
                                 <rect key="frame" x="-1" y="25" width="55" height="45"/>
                                 <constraints>
@@ -82,21 +58,48 @@
                                     <action selector="addPlane:" destination="BV1-FR-VrT" eventType="touchUpInside" id="V0f-xa-Gah"/>
                                 </connections>
                             </button>
+                            <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
+                                <rect key="frame" x="138" y="266" width="45" height="36"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="BOu-hj-fzL">
+                                    <rect key="frame" x="0.0" y="0.0" width="45" height="36"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="text" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gBq-mx-UQs">
+                                            <rect key="frame" x="8" y="8" width="29" height="20.5"/>
+                                            <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                            <color key="textColor" name="selectedMenuItemTextColor" catalog="System" colorSpace="catalog"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="bottom" secondItem="BOu-hj-fzL" secondAttribute="bottomMargin" id="IeB-Ts-aOB"/>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="leading" secondItem="BOu-hj-fzL" secondAttribute="leading" constant="8" id="ZwV-sV-hpQ"/>
+                                        <constraint firstItem="gBq-mx-UQs" firstAttribute="trailing" secondItem="BOu-hj-fzL" secondAttribute="trailingMargin" id="nfm-0E-R3m"/>
+                                    </constraints>
+                                </view>
+                                <constraints>
+                                    <constraint firstItem="gBq-mx-UQs" firstAttribute="top" secondItem="vlo-f7-vEM" secondAttribute="top" constant="8" id="Vmj-w3-yFW"/>
+                                    <constraint firstAttribute="bottom" secondItem="gBq-mx-UQs" secondAttribute="bottom" constant="7.5" id="Wwj-cp-eYe"/>
+                                </constraints>
+                                <blurEffect style="light"/>
+                            </visualEffectView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="vlo-f7-vEM" firstAttribute="leading" secondItem="aUX-A6-b9h" secondAttribute="leadingMargin" id="0e7-9L-b7p"/>
+                            <constraint firstItem="QK1-AY-nxF" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="vlo-f7-vEM" secondAttribute="trailing" id="1V2-1t-3k6"/>
                             <constraint firstItem="Zkl-uP-lp2" firstAttribute="top" secondItem="Udm-jl-Xvc" secondAttribute="bottom" constant="8" symbolic="YES" id="3kg-YV-zNb"/>
+                            <constraint firstItem="vlo-f7-vEM" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="QK1-AY-nxF" secondAttribute="leading" id="BT3-xf-nnD"/>
                             <constraint firstItem="Zkl-uP-lp2" firstAttribute="centerX" secondItem="Udm-jl-Xvc" secondAttribute="centerX" id="Bbk-xL-V2z"/>
                             <constraint firstItem="Udm-jl-Xvc" firstAttribute="top" secondItem="SAc-bW-iOG" secondAttribute="bottom" constant="8" symbolic="YES" id="KRi-b3-rH6"/>
                             <constraint firstItem="SAc-bW-iOG" firstAttribute="top" secondItem="QK1-AY-nxF" secondAttribute="top" constant="5" id="QGZ-Qx-Acu"/>
                             <constraint firstItem="Udm-jl-Xvc" firstAttribute="leading" secondItem="SAc-bW-iOG" secondAttribute="leading" id="S24-fx-HmC"/>
+                            <constraint firstItem="Zkl-uP-lp2" firstAttribute="leading" secondItem="QK1-AY-nxF" secondAttribute="leading" constant="1" id="Sn9-tO-51r"/>
                             <constraint firstAttribute="trailing" secondItem="C9T-vs-BRq" secondAttribute="trailing" id="U8O-eD-bVI"/>
+                            <constraint firstItem="vlo-f7-vEM" firstAttribute="centerY" secondItem="C9T-vs-BRq" secondAttribute="centerY" id="WVK-fh-6Ng"/>
                             <constraint firstItem="C9T-vs-BRq" firstAttribute="leading" secondItem="aUX-A6-b9h" secondAttribute="leading" id="Wvz-6j-pu8"/>
-                            <constraint firstItem="Zkl-uP-lp2" firstAttribute="leading" secondItem="vlo-f7-vEM" secondAttribute="leading" constant="-15" id="Zac-Zn-g2Q"/>
+                            <constraint firstItem="vlo-f7-vEM" firstAttribute="centerX" secondItem="C9T-vs-BRq" secondAttribute="centerX" id="a2F-12-0gm"/>
                             <constraint firstItem="C9T-vs-BRq" firstAttribute="top" secondItem="aUX-A6-b9h" secondAttribute="top" id="azQ-n7-jPP"/>
                             <constraint firstItem="C9T-vs-BRq" firstAttribute="bottom" secondItem="QK1-AY-nxF" secondAttribute="bottom" id="l08-3i-kCR"/>
-                            <constraint firstAttribute="bottom" secondItem="vlo-f7-vEM" secondAttribute="bottom" constant="20" symbolic="YES" id="s6R-CJ-aaM"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="QK1-AY-nxF"/>
                     </view>

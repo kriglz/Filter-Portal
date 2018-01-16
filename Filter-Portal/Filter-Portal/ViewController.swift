@@ -30,11 +30,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
+        
+        UIView.animate(withDuration: 5.0, animations: { [weak self] in
+            self?.sessionInfoView.isHidden = false
+            self?.sessionInfoLabel.text = "Tap on the plane to add the portal."
+        }, completion: { _ in
+            self.sessionInfoLabel.text = ""
+            self.sessionInfoView.isHidden = true
+        })
+        
+        
     }
     
     @IBOutlet weak var filterButton: UIButton!
     @IBOutlet weak var resetButton: UIButton!
-    
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
