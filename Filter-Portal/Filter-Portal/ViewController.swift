@@ -16,7 +16,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
     private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
-    
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIGaussianBlur", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
     private var filterIndex: Int = 0 {
@@ -34,7 +33,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-//    private var isInFilteredSide = true
+    private var isInFilteredSide = false
     private var isPortalVisible = true
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
@@ -183,10 +182,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     /// Decides if point of view is in filtered side or non filtered side.
-    private func getTheSide() -> Bool {
-    
-        return false
+    private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
+        
+//        print(isPortalVisible, "isPortalVisible")
+//        print(cameraPoint.position.z - portal.position.z)
+//        print(isPortalFrameBiggerThanCameras, "isPortalFrameBiggerThanCameras")
+        
+        if !isInFilteredSide {
+            if !isPortalVisible || (isPortalVisible && (cameraPoint.position.z - portal.position.z) >= 0) {
+                return false
+            } else if isPortalFrameBiggerThanCameras {
+                return true
+            } else {
+                return false
+            }
+        } else {
+            if !isPortalVisible || (isPortalVisible && (cameraPoint.position.z - portal.position.z) >= 0) {
+                return true
+            } else if isPortalFrameBiggerThanCameras {
+                return false
+            } else {
+                return true
+            }
+        }
     }
+    
+    private var isPortalFrameBiggerThanCameras = false
     
     /// Applies selected filters to the portal / scene.
     private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
@@ -209,16 +230,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             
             // Calculates if portal node is in camera's frustum.
-            if let cameraView = sceneView.pointOfView {
-                isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
-            }
+            guard let cameraView = sceneView.pointOfView else { return }
+            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
             
             // Defines shape of cropping image.
             let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             // Defines relative size of portal to visible scene.
-            let isPortalFrameBiggerThanCameras: Bool = compare(cropShape, with: frameImage.extent)
+            isPortalFrameBiggerThanCameras = compare(cropShape, with: frameImage.extent)
             // Defines point of view standing position.
-            let isInFilteredSide = getTheSide()
+            isInFilteredSide = getTheSide(of: cameraView, relativeTo: portal)
+            
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
             if isPortalVisible && !isPortalFrameBiggerThanCameras {
@@ -295,7 +316,40 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
                 
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
-            } else if isPortalVisible && isPortalFrameBiggerThanCameras || !isPortalVisible {
+            } else if isPortalVisible && isPortalFrameBiggerThanCameras {
+                
+                if isInFilteredSide {
+                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
+                    sceneView.scene.background.contents = frameCGImage
+                    context.clearCaches()
+                } else {
+                    if shouldBeScaled {
+                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
+                        if let result = ciFilter.outputImage {
+                            
+                            if let background = backgroundImage(for: tempImage) {
+                                tempImage = result.composited(over: background)
+                            } else {
+                                tempImage = result
+                            }
+                            
+                            tempImage = scale(image: tempImage, by: scaleFactor)
+                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
+                        }
+                    } else {
+                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                        
+                        if let result = ciFilter.outputImage {
+                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
+                            sceneView.scene.background.contents = frameCGImage
+                            context.clearCaches()
+                        }
+                    }
+                }
+            } else if !isPortalVisible {
                 
                 if !isInFilteredSide {
                     let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
@@ -400,42 +454,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
         
-        /// Mid point of AB line.
-        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-        /// Mid point of BC line.
-        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
-        
-        if pointBC.y < -200 {
-            pointBC.y = -200
-        }
-        
-        
-        /// Mid point of CD line.
-        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-        /// Mid point of DA line.
-        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
-        
-        if pointDA.y < -200 {
-            pointDA.y = -200
-        }
-        
-        
-
-        path.move(to: pointAB)
-        path.addQuadCurve(to: pointBC, controlPoint: pointB)
-        path.addQuadCurve(to: pointCD, controlPoint: pointC)
-        path.addQuadCurve(to: pointDA, controlPoint: pointD)
-        path.addQuadCurve(to: pointAB, controlPoint: pointA)
+//        /// Mid point of AB line.
+//        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
+//        /// Mid point of BC line.
+//        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+//
+//        if pointBC.y < -200 {
+//            pointBC.y = -200
+//        }
+//
+//        /// Mid point of CD line.
+//        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
+//        /// Mid point of DA line.
+//        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+//
+//        if pointDA.y < -200 {
+//            pointDA.y = -200
+//        }
+//
+//        path.move(to: pointAB)
+//        path.addQuadCurve(to: pointBC, controlPoint: pointB)
+//        path.addQuadCurve(to: pointCD, controlPoint: pointC)
+//        path.addQuadCurve(to: pointDA, controlPoint: pointD)
+//        path.addQuadCurve(to: pointAB, controlPoint: pointA)
 
         
-//        path.move(to: pointA)
-//        path.addLine(to: pointB)
-//        path.addLine(to: pointC)
-//        path.addLine(to: pointD)
+        path.move(to: pointA)
+        path.addLine(to: pointB)
+        path.addLine(to: pointC)
+        path.addLine(to: pointD)
         
         path.close()
         return path
