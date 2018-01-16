@@ -33,6 +33,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
+    private var isPortalFrameBiggerThanCameras = false
     private var isInFilteredSide = false
     private var isPortalVisible = true
     private var shouldBeScaled: Bool = false
@@ -181,33 +182,41 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
+    private var didEnterPortal = false
+    
     /// Decides if point of view is in filtered side or non filtered side.
     private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
         
-//        print(isPortalVisible, "isPortalVisible")
-//        print(cameraPoint.position.z - portal.position.z)
-//        print(isPortalFrameBiggerThanCameras, "isPortalFrameBiggerThanCameras")
+        print(isPortalVisible, "isPortalVisible")
+        print(cameraPoint.position.z - portal.position.z)
+        print(didEnterPortal, "didEnterPortal")
+        print(isInFilteredSide, "isInFilteredSide\n")
+
+        
+        guard !didEnterPortal else {
+            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
+                didEnterPortal = false
+            }
+            return isInFilteredSide
+        }
         
         if !isInFilteredSide {
-            if !isPortalVisible || (isPortalVisible && (cameraPoint.position.z - portal.position.z) >= 0) {
-                return false
-            } else if isPortalFrameBiggerThanCameras {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                didEnterPortal = true
                 return true
             } else {
                 return false
             }
+            
         } else {
-            if !isPortalVisible || (isPortalVisible && (cameraPoint.position.z - portal.position.z) >= 0) {
-                return true
-            } else if isPortalFrameBiggerThanCameras {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                didEnterPortal = true
                 return false
             } else {
                 return true
             }
         }
     }
-    
-    private var isPortalFrameBiggerThanCameras = false
     
     /// Applies selected filters to the portal / scene.
     private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
@@ -316,7 +325,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
                 
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
-            } else if isPortalVisible && isPortalFrameBiggerThanCameras {
+            } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
                 
                 if isInFilteredSide {
                     let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
@@ -349,7 +358,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                         }
                     }
                 }
-            } else if !isPortalVisible {
+            } else {//if !isPortalVisible {
                 
                 if !isInFilteredSide {
                     let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
