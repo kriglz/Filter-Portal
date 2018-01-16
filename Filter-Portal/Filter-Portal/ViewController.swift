@@ -30,16 +30,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
+        hidePlaneNodes(false)
         
-        UIView.animate(withDuration: 5.0, animations: { [weak self] in
-            self?.sessionInfoView.isHidden = false
-            self?.sessionInfoLabel.text = "Tap on the plane to add the portal."
-        }, completion: { _ in
-            self.sessionInfoLabel.text = ""
-            self.sessionInfoView.isHidden = true
-        })
-        
-        
+        let alert = UIAlertController(title: "", message: "Tap on the plane to add the portal.", preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { action in
+            switch action.style{
+            case .default:
+                print("default")
+            case .cancel:
+                print("cancel")
+            case .destructive:
+                print("destructive")
+            }}))
+        self.present(alert, animated: true, completion: nil)
     }
     
     @IBOutlet weak var filterButton: UIButton!
@@ -620,7 +623,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let touchPoint = recognizer.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
-//        hidePlaneNodes()
+        hidePlaneNodes(true)
         shoulfDisableButtons(false)
     }
     
@@ -642,11 +645,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func hidePlaneNodes(){
+    private func hidePlaneNodes(_ yes: Bool){
         // Removes plane child nodes when portal is added.
         for child in sceneView.scene.rootNode.childNodes {
             if child.name == "plane" {
-                child.isHidden = true
+                if yes {
+                    child.isHidden = true
+                } else {
+                    child.isHidden = false
+                }
             }
         }
     }
@@ -663,12 +670,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     func addToPlane(item: SCNNode, atPoint point: CGPoint) {
-        let hits = sceneView.hitTest(point, types: .existingPlaneUsingExtent)
+        let hits = sceneView.hitTest(point, types: .existingPlane)
         if hits.count > 0, let firstHit = hits.first {
             let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
-            
             item.position = hitPosition
-            item.position.y += Float(portalSize.height * 1.5)
+            
+            item.position.y += Float(portalSize.height)
             if let camera = sceneView.pointOfView {
                 // Set plane position to face the camera.
                 item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
