@@ -56,6 +56,9 @@
                                     <constraint firstAttribute="height" constant="50" id="zeg-Dy-8C5"/>
                                 </constraints>
                                 <state key="normal" title="Button" image="refresh"/>
+                                <connections>
+                                    <action selector="resetScene:" destination="BV1-FR-VrT" eventType="touchUpInside" id="43C-rg-kxY"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Zkl-uP-lp2">
                                 <rect key="frame" x="311" y="147" width="55" height="50"/>
@@ -64,6 +67,9 @@
                                     <constraint firstAttribute="width" constant="55" id="WTi-ym-amL"/>
                                 </constraints>
                                 <state key="normal" title="Button" image="add"/>
+                                <connections>
+                                    <action selector="addPlane:" destination="BV1-FR-VrT" eventType="touchUpInside" id="V0f-xa-Gah"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Udm-jl-Xvc">
                                 <rect key="frame" x="308" y="89" width="60" height="50"/>
@@ -72,6 +78,9 @@
                                     <constraint firstAttribute="height" constant="50" id="esb-wb-TyU"/>
                                 </constraints>
                                 <state key="normal" title="Button" image="filters"/>
+                                <connections>
+                                    <action selector="changeFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="qfz-eZ-ss8"/>
+                                </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>

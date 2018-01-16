@@ -12,6 +12,22 @@ import ARKit
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
+    @IBAction func resetScene(_ sender: UIButton) {
+    }
+    
+    @IBAction func changeFilter(_ sender: UIButton) {
+        if filterIndex < portalCIFilter.count - 1 {
+            filterIndex += 1
+        } else {
+            filterIndex = 0
+        }
+    }
+    
+    @IBAction func addPlane(_ sender: UIButton) {
+    }
+    
+    
+    
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
@@ -80,18 +96,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let pinchHandler = #selector(handlePinchGesture(recognizer:))
         let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
         self.view.addGestureRecognizer(pinchRecognizer)
-        
-        // Adds swipe right gesture recognizer to change portal filters.
-        let swipeRightHandler = #selector(handleSwipeRightGesture(recognizer:))
-        let swipeRightRecognizer = UISwipeGestureRecognizer(target: self, action: swipeRightHandler)
-        swipeRightRecognizer.direction = .right
-        self.view.addGestureRecognizer(swipeRightRecognizer)
-        
-        // Adds swipe gesture recognizer to change portal filters.
-        let swipeLeftHandler = #selector(handleSwipeLeftGesture(recognizer:))
-        let swipeLeftRecognizer = UISwipeGestureRecognizer(target: self, action: swipeLeftHandler)
-        swipeLeftRecognizer.direction = .left
-        self.view.addGestureRecognizer(swipeLeftRecognizer)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -602,22 +606,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         default:
             break
-        }
-    }
-    
-    @objc private func handleSwipeRightGesture(recognizer: UISwipeGestureRecognizer){
-        if filterIndex < portalCIFilter.count - 1 {
-            filterIndex += 1
-        } else {
-            filterIndex = 0
-        }
-    }
-    
-    @objc private func handleSwipeLeftGesture(recognizer: UISwipeGestureRecognizer){
-        if filterIndex > 0 {
-            filterIndex -= 1
-        } else {
-            filterIndex = portalCIFilter.count - 1
         }
     }
     
