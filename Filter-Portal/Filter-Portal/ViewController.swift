@@ -18,6 +18,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 child.removeFromParentNode()
             }
         }
+        shoulfDisableButtons(true)
     }
     
     @IBAction func changeFilter(_ sender: UIButton) {
@@ -31,7 +32,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBAction func addPlane(_ sender: UIButton) {
     }
     
-    
+    @IBOutlet weak var filterButton: UIButton!
+    @IBOutlet weak var resetButton: UIButton!
     
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
@@ -89,6 +91,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
+        shoulfDisableButtons(true)
+        
         // Adds tap gesture recognizer to add portal to the scene.
         let tapHandler = #selector(handleTapGesture(recognizer:))
         let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
@@ -106,6 +110,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.session.pause()
     }
     
+    
+    private func shoulfDisableButtons(_ yes: Bool) {
+        if yes {
+            resetButton.isEnabled = false
+            resetButton.alpha = 0.7
+            filterButton.isEnabled = false
+            filterButton.alpha = 0.7
+        } else {
+            resetButton.isEnabled = true
+            resetButton.alpha = 1
+            filterButton.isEnabled = true
+            filterButton.alpha = 1
+        }
+    }
     
     /// - Tag: UpdateARContent
     
@@ -594,6 +612,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
 //        hidePlaneNodes()
+        shoulfDisableButtons(false)
     }
     
     @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
