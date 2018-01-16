@@ -192,7 +192,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         print(didEnterPortal, "didEnterPortal")
         print(isInFilteredSide, "isInFilteredSide\n")
 
-        
         guard !didEnterPortal else {
             if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
                 didEnterPortal = false
