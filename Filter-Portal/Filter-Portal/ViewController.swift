@@ -38,16 +38,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sceneView: ARSCNView!
     private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
     private let context = CIContext()
-    private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIGaussianBlur", "CIEdges", "CICrystallize", "CIColorPosterize", "CIColorInvert"]
-    private var filterIndex: Int = 0 {
+    private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIEdges", "CIColorPosterize", "CIColorInvert"]
+    private var filterIndex: Int = 4 {
         didSet {
             switch filterIndex {
             case 1:
                 shouldBeScaled = true
                 scaleFactor = 4
-            case 2, 4:
-                shouldBeScaled = true
-                scaleFactor = 2
             default:
                 shouldBeScaled = false
                 scaleFactor = 0
@@ -420,7 +417,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     private func scale(image: CIImage, by factor: CGFloat) -> CIImage {
-        
         let scaleFilter = CIFilter(name: "CIAffineTransform")!
         scaleFilter.setValue(image, forKey: kCIInputImageKey)
         scaleFilter.setValue(CGAffineTransform.init(scaleX: factor, y: factor), forKey: "inputTransform")
