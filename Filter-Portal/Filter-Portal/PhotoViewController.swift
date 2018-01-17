@@ -13,7 +13,7 @@ import MobileCoreServices
 class PhotoViewController: UIViewController {
 
     private var imageJPEGData: Data?
-    public var capturedImagePxB: CVPixelBuffer?
+    public var capturedCIImage: CIImage?
     @IBOutlet weak var imageView: UIImageView!
 
     @IBAction func discard(_ sender: UIButton) {
@@ -41,7 +41,9 @@ class PhotoViewController: UIViewController {
     
 
     override func viewWillAppear(_ animated: Bool) {
-        guard let capturedImagePxB = capturedImagePxB, let jpegData = jpegData(withPixelBuffer: capturedImagePxB, attachments: nil) else {
+//        let metadataAttachments: CFDictionary = capturedCIImage?.depthData as! CFDictionary
+
+        guard let capturedCIImage = capturedCIImage, let jpegData = jpegData(for: capturedCIImage, attachments: nil) else {
             print("Unable to create JPEG photo")
             self.dismiss(animated: false, completion: nil)
             return
@@ -51,10 +53,10 @@ class PhotoViewController: UIViewController {
         imageView?.image = UIImage(data: jpegData)
     }
 
-    private func jpegData(withPixelBuffer pixelBuffer: CVPixelBuffer, attachments: CFDictionary?) -> Data? {
+    private func jpegData(for ciImage: CIImage, attachments: CFDictionary?) -> Data? {
         let ciContext = CIContext()
-        let renderedCIImage = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
-        guard let renderedCGImage = ciContext.createCGImage(renderedCIImage, from: renderedCIImage.extent) else {
+//        let renderedCIImage = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
+        guard let renderedCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {
             print("Failed to create CGImage")
             return nil
         }

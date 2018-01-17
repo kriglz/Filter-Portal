@@ -223,29 +223,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-
-        if !shouldSavePhoto {
-            // Adds filters to the image only if portal has been created.
-            if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-                applyFilter(to: portal, for: frameImage, ofCamera: frame)
-            } else {
-                let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-                sceneView.scene.background.contents = frameCGImage
-                context.clearCaches()
-            }
+        
+        // Adds filters to the image only if portal has been created.
+        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+            applyFilter(to: portal, for: frameImage, ofCamera: frame)
         } else {
-            saveToLibrary(frame.capturedImage)
+            let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
+            sceneView.scene.background.contents = frameCGImage
+            context.clearCaches()
+        }
+        
+        if shouldSavePhoto {
+            saveToLibrary(CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
     }
     
     /// Save photo.
-    private func saveToLibrary(_ photoPxB: CVPixelBuffer) {
+    private func saveToLibrary(_ photo: CIImage) {
         shouldSavePhoto = false
-
-//        let metadataAttachments: CFDictionary = frameImage.depthData as CFDictionary
         
         let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
-        photoViewController.capturedImagePxB = photoPxB
+        photoViewController.capturedCIImage = photo
         photoViewController.modalPresentationStyle = .overCurrentContext
         present(photoViewController, animated: true, completion: nil)
     }
