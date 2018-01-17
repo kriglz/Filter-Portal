@@ -140,13 +140,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        print("\nview did disappear\n")
-//        sceneView.session.pause()
-
-    }
-    
     /// - Tag: UpdateARContent
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
@@ -179,6 +172,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Removes debugging feature points.
         sceneView.debugOptions.remove(ARSCNDebugOptions.showFeaturePoints)
+        
+        showARPlanes(nil)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -585,8 +580,35 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 //        path.addLine(to: pointC)
 //        path.addLine(to: pointD)
         
+        
+        
         path.close()
+        
+//        addFrame(for: path)
+        
         return path
+    }
+    
+    private func addFrame(for path: UIBezierPath) {
+        let shape = SCNShape(path: path, extrusionDepth: 0.05)
+        
+        // Material colors
+        let cyanMaterial = SCNMaterial()
+        cyanMaterial.diffuse.contents = UIColor.cyan
+        let anOrangeMaterial = SCNMaterial()
+        anOrangeMaterial.diffuse.contents = UIColor.orange
+        let aPurpleMaterial = SCNMaterial()
+        aPurpleMaterial.diffuse.contents = UIColor.purple
+        
+        shape.materials = [cyanMaterial, anOrangeMaterial, aPurpleMaterial]
+        let shapeNode = SCNNode(geometry: shape)
+        
+        guard let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) else { return }
+        
+        shapeNode.position = portal.position
+        shapeNode.orientation = portal.orientation
+        sceneView.scene.rootNode.addChildNode(shapeNode)
+        print("frame added")
     }
     
     /// Cropps image using custom shape.
