@@ -19,7 +19,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 child.removeFromParentNode()
             }
         }
-        shoulfDisableButtons(true)
+        shouldDisableButtons(true)
     }
     
     
@@ -33,6 +33,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func addPlane(_ sender: UIButton) {
         hidePlaneNodes(false)
+        tapRecognizer.isEnabled = true
         
         let alert = UIAlertController(title: "", message: "Tap on the plane to add the portal.", preferredStyle: UIAlertControllerStyle.alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { action in
@@ -52,9 +53,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBOutlet weak var photoCaptureButotn: UIButton!
-
-    
     private var shouldSavePhoto: Bool = false
+    private var tapRecognizer = UITapGestureRecognizer()
     
     @IBOutlet weak var filterButton: UIButton!
     @IBOutlet weak var resetButton: UIButton!
@@ -83,8 +83,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+    override func viewDidLoad() {
+        super.viewDidLoad()
         
         guard ARWorldTrackingConfiguration.isSupported else {
             fatalError("""
@@ -115,38 +115,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
-        shoulfDisableButtons(true)
-        
         // Adds tap gesture recognizer to add portal to the scene.
         let tapHandler = #selector(handleTapGesture(recognizer:))
-        let tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
+        tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
-        
+        tapRecognizer.isEnabled = false
+
         // Adds pinch gesture to scale the node.
         let pinchHandler = #selector(handlePinchGesture(recognizer:))
         let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
         self.view.addGestureRecognizer(pinchRecognizer)
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        // Pause the view's session
-        sceneView.session.pause()
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
+            shouldDisableButtons(false)
+        } else {
+            shouldDisableButtons(true)
+        }
     }
     
-    
-    private func shoulfDisableButtons(_ yes: Bool) {
-        if yes {
-            resetButton.isEnabled = false
-            resetButton.alpha = 0.7
-            filterButton.isEnabled = false
-            filterButton.alpha = 0.7
-        } else {
-            resetButton.isEnabled = true
-            resetButton.alpha = 1
-            filterButton.isEnabled = true
-            filterButton.alpha = 1
-        }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        print("\nview did disappear\n")
+//        sceneView.session.pause()
+
     }
     
     /// - Tag: UpdateARContent
@@ -234,18 +229,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         if shouldSavePhoto {
-            saveToLibrary(CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
+            presentPhotoVC(CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
     }
     
     /// Save photo.
-    private func saveToLibrary(_ photo: CIImage) {
+    private func presentPhotoVC(_ photo: CIImage) {
         shouldSavePhoto = false
         
         let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
         photoViewController.capturedCIImage = photo
-        photoViewController.modalPresentationStyle = .overCurrentContext
-        present(photoViewController, animated: true, completion: nil)
+
+//        let navController = UINavigationController(rootViewController: self)
+        self.navigationController?.present(photoViewController, animated: true, completion: nil)
+//        present(photoViewController, animated: true, completion: nil)
     }
     
     /// Applies selected filters to the portal / scene.
@@ -458,6 +455,22 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
+    private func shouldDisableButtons(_ yes: Bool) {
+        if yes {
+            resetButton.isEnabled = false
+            resetButton.alpha = 0.7
+            filterButton.isEnabled = false
+            filterButton.alpha = 0.7
+            photoCaptureButotn.isHidden = true
+        } else {
+            resetButton.isEnabled = true
+            resetButton.alpha = 1
+            filterButton.isEnabled = true
+            filterButton.alpha = 1
+            photoCaptureButotn.isHidden = false
+        }
+    }
+    
     private func compare(_ mask: UIBezierPath, with sceneFrame: CGRect) -> Bool {
         let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
         let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
@@ -648,7 +661,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
         hidePlaneNodes(true)
-        shoulfDisableButtons(false)
+        shouldDisableButtons(false)
     }
     
     @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
