@@ -229,20 +229,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         if shouldSavePhoto {
-            presentPhotoVC(CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
+            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
     }
     
-    /// Save photo.
-    private func presentPhotoVC(_ photo: CIImage) {
+    /// Saves photo.
+    private func presentPhotoVC(with photo: CIImage) {
         shouldSavePhoto = false
-        
         let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
         photoViewController.capturedCIImage = photo
-
-//        let navController = UINavigationController(rootViewController: self)
         self.navigationController?.present(photoViewController, animated: true, completion: nil)
-//        present(photoViewController, animated: true, completion: nil)
     }
     
     /// Applies selected filters to the portal / scene.
