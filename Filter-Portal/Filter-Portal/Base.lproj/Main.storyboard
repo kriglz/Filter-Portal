@@ -157,13 +157,19 @@
                                     <subviews>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Vg4-Zr-PoU">
                                             <rect key="frame" x="8" y="10" width="76" height="34"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="76" id="rk6-eH-7mb"/>
+                                            </constraints>
                                             <state key="normal" title="DISCARD"/>
                                             <connections>
                                                 <action selector="discard:" destination="6VI-AB-TiY" eventType="touchUpInside" id="o3y-bV-sul"/>
                                             </connections>
                                         </button>
-                                        <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkw-cU-e5C">
-                                            <rect key="frame" x="323" y="12" width="44" height="34"/>
+                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkw-cU-e5C">
+                                            <rect key="frame" x="323" y="10.5" width="44" height="34"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="44" id="jod-Yf-2Af"/>
+                                            </constraints>
                                             <state key="normal" title="SAVE"/>
                                             <connections>
                                                 <action selector="savePhoto:" destination="6VI-AB-TiY" eventType="touchUpInside" id="8xt-Wc-qBN"/>
@@ -171,13 +177,10 @@
                                         </button>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="9xo-pv-rGl" secondAttribute="trailingMargin" id="8Oc-Rk-hBc"/>
+                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="centerY" secondItem="9xo-pv-rGl" secondAttribute="centerY" id="D0z-Jp-kFY"/>
                                         <constraint firstItem="Vg4-Zr-PoU" firstAttribute="centerY" secondItem="9xo-pv-rGl" secondAttribute="centerY" id="DF1-y1-DfG"/>
-                                        <constraint firstAttribute="bottom" secondItem="Vg4-Zr-PoU" secondAttribute="bottom" constant="11" id="GHW-KO-0rX"/>
-                                        <constraint firstAttribute="bottom" secondItem="Tkw-cU-e5C" secondAttribute="bottom" constant="9" id="ZnX-Ef-Kam"/>
-                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="9xo-pv-rGl" secondAttribute="leadingMargin" id="f5V-WU-kv6"/>
-                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Vg4-Zr-PoU" secondAttribute="trailingMargin" id="gDy-CH-YRO"/>
-                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="leading" secondItem="9xo-pv-rGl" secondAttribute="leadingMargin" id="kDm-Vv-JIs"/>
+                                        <constraint firstAttribute="trailing" secondItem="Tkw-cU-e5C" secondAttribute="trailing" constant="8" id="QJd-xy-bZ0"/>
+                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="leading" secondItem="9xo-pv-rGl" secondAttribute="leading" constant="8" id="cxV-Cr-fwM"/>
                                     </constraints>
                                 </view>
                                 <constraints>
