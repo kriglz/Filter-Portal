@@ -9,6 +9,10 @@
 import UIKit
 import SceneKit
 import ARKit
+import Photos
+import MobileCoreServices
+
+
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
@@ -20,6 +24,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         shoulfDisableButtons(true)
     }
+    
     
     @IBAction func changeFilter(_ sender: UIButton) {
         if filterIndex < portalCIFilter.count - 1 {
@@ -45,6 +50,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         self.present(alert, animated: true, completion: nil)
     }
     
+    @IBAction func takeAPhoto(_ sender: UIButton) {
+        shouldSavePhoto = true
+    }
+    
+    @IBOutlet weak var photoCaptureButotn: UIButton!
+
+    
+    private var shouldSavePhoto: Bool = false
+    
     @IBOutlet weak var filterButton: UIButton!
     @IBOutlet weak var resetButton: UIButton!
     @IBOutlet weak var sessionInfoView: UIView!
@@ -68,6 +82,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private var isPortalFrameBiggerThanCameras = false
     private var isInFilteredSide = false
     private var isPortalVisible = true
+    private var didEnterPortal = false
     private var shouldBeScaled: Bool = false
     private var scaleFactor: CGFloat = 0.0
 
@@ -212,49 +227,46 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
 
-        // Adds filters to the image only if portal has been created.
-        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            applyFilter(to: portal, for: frameImage, ofCamera: frame)
+        if !shouldSavePhoto {
+            // Adds filters to the image only if portal has been created.
+            if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+                applyFilter(to: portal, for: frameImage, ofCamera: frame)
+            } else {
+                let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
+                sceneView.scene.background.contents = frameCGImage
+                context.clearCaches()
+            }
         } else {
-            let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-            sceneView.scene.background.contents = frameCGImage
-            context.clearCaches()
+            saveToLibrary(frame.capturedImage)
         }
     }
     
-    private var didEnterPortal = false
-    
-    /// Decides if point of view is in filtered side or non filtered side.
-    private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
+    /// Save photo.
+    private func saveToLibrary(_ photoPxB: CVPixelBuffer) {
         
-//        print(isPortalVisible, "isPortalVisible")
-//        print(cameraPoint.position.z - portal.position.z)
-//        print(didEnterPortal, "didEnterPortal")
-//        print(isInFilteredSide, "isInFilteredSide\n")
-
-        guard !didEnterPortal else {
-            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
-                didEnterPortal = false
-            }
-            return isInFilteredSide
+//        let metadataAttachments: CFDictionary = frameImage.depthData as CFDictionary
+        guard let jpegData = jpegData(withPixelBuffer: photoPxB, attachments: nil) else {
+            print("Unable to create JPEG photo")
+            return
         }
         
-        if !isInFilteredSide {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                didEnterPortal = true
-                return true
-            } else {
-                return false
-            }
-            
-        } else {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                didEnterPortal = true
-                return false
-            } else {
-                return true
+        performSegue(withIdentifier: <#T##String#>, sender: photoCaptureButotn)
+        
+        // Save JPEG to photo library
+        PHPhotoLibrary.requestAuthorization { status in
+            if status == .authorized {
+                PHPhotoLibrary.shared().performChanges({
+                    let creationRequest = PHAssetCreationRequest.forAsset()
+                    
+                    creationRequest.addResource(with: .photo, data: jpegData, options: nil)
+                }, completionHandler: { _, error in
+                    if let error = error {
+                        print("Error occurred while saving photo to photo library: \(error)")
+                    }
+                })
             }
         }
+        shouldSavePhoto = false
     }
     
     /// Applies selected filters to the portal / scene.
@@ -430,6 +442,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    /// Decides if point of view is in filtered side or non filtered side.
+    private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
+        
+        //        print(isPortalVisible, "isPortalVisible")
+        //        print(cameraPoint.position.z - portal.position.z)
+        //        print(didEnterPortal, "didEnterPortal")
+        //        print(isInFilteredSide, "isInFilteredSide\n")
+        
+        guard !didEnterPortal else {
+            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
+                didEnterPortal = false
+            }
+            return isInFilteredSide
+        }
+        
+        if !isInFilteredSide {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                didEnterPortal = true
+                return true
+            } else {
+                return false
+            }
+            
+        } else {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                didEnterPortal = true
+                return false
+            } else {
+                return true
             }
         }
     }
@@ -689,6 +734,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             sceneView.scene.rootNode.addChildNode(item)
         }
+    }
+    
+    private func jpegData(withPixelBuffer pixelBuffer: CVPixelBuffer, attachments: CFDictionary?) -> Data? {
+        let ciContext = CIContext()
+        let renderedCIImage = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
+        guard let renderedCGImage = ciContext.createCGImage(renderedCIImage, from: renderedCIImage.extent) else {
+            print("Failed to create CGImage")
+            return nil
+        }
+        
+        guard let data = CFDataCreateMutable(kCFAllocatorDefault, 0) else {
+            print("Create CFData error!")
+            return nil
+        }
+        
+        guard let cgImageDestination = CGImageDestinationCreateWithData(data, kUTTypeJPEG, 1, nil) else {
+            print("Create CGImageDestination error!")
+            return nil
+        }
+        
+        CGImageDestinationAddImage(cgImageDestination, renderedCGImage, attachments)
+        if CGImageDestinationFinalize(cgImageDestination) {
+            return data as Data
+        }
+        print("Finalizing CGImageDestination error!")
+        return nil
     }
 }
 
