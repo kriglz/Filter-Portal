@@ -39,15 +39,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         tapRecognizer.isEnabled = true
         
         let alert = UIAlertController(title: "", message: "Tap on the plane to add the portal.", preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { action in
-            switch action.style{
-            case .default:
-                print("default")
-            case .cancel:
-                print("cancel")
-            case .destructive:
-                print("destructive")
-            }}))
+        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: nil))
         self.present(alert, animated: true, completion: nil)
     }
     
