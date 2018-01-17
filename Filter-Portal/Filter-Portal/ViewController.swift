@@ -9,9 +9,6 @@
 import UIKit
 import SceneKit
 import ARKit
-import Photos
-import MobileCoreServices
-
 
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
@@ -243,30 +240,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     /// Save photo.
     private func saveToLibrary(_ photoPxB: CVPixelBuffer) {
-        
-//        let metadataAttachments: CFDictionary = frameImage.depthData as CFDictionary
-        guard let jpegData = jpegData(withPixelBuffer: photoPxB, attachments: nil) else {
-            print("Unable to create JPEG photo")
-            return
-        }
-        
-        performSegue(withIdentifier: <#T##String#>, sender: photoCaptureButotn)
-        
-        // Save JPEG to photo library
-        PHPhotoLibrary.requestAuthorization { status in
-            if status == .authorized {
-                PHPhotoLibrary.shared().performChanges({
-                    let creationRequest = PHAssetCreationRequest.forAsset()
-                    
-                    creationRequest.addResource(with: .photo, data: jpegData, options: nil)
-                }, completionHandler: { _, error in
-                    if let error = error {
-                        print("Error occurred while saving photo to photo library: \(error)")
-                    }
-                })
-            }
-        }
         shouldSavePhoto = false
+
+//        let metadataAttachments: CFDictionary = frameImage.depthData as CFDictionary
+        
+        let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
+        photoViewController.capturedImagePxB = photoPxB
+        photoViewController.modalPresentationStyle = .overCurrentContext
+        present(photoViewController, animated: true, completion: nil)
     }
     
     /// Applies selected filters to the portal / scene.
@@ -734,32 +715,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             sceneView.scene.rootNode.addChildNode(item)
         }
-    }
-    
-    private func jpegData(withPixelBuffer pixelBuffer: CVPixelBuffer, attachments: CFDictionary?) -> Data? {
-        let ciContext = CIContext()
-        let renderedCIImage = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
-        guard let renderedCGImage = ciContext.createCGImage(renderedCIImage, from: renderedCIImage.extent) else {
-            print("Failed to create CGImage")
-            return nil
-        }
-        
-        guard let data = CFDataCreateMutable(kCFAllocatorDefault, 0) else {
-            print("Create CFData error!")
-            return nil
-        }
-        
-        guard let cgImageDestination = CGImageDestinationCreateWithData(data, kUTTypeJPEG, 1, nil) else {
-            print("Create CGImageDestination error!")
-            return nil
-        }
-        
-        CGImageDestinationAddImage(cgImageDestination, renderedCGImage, attachments)
-        if CGImageDestinationFinalize(cgImageDestination) {
-            return data as Data
-        }
-        print("Finalizing CGImageDestination error!")
-        return nil
     }
 }
 

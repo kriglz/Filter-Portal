@@ -6,7 +6,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13770"/>
-        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -142,12 +141,12 @@
         <!--Photo View Controller-->
         <scene sceneID="auY-Ts-aNG">
             <objects>
-                <viewController id="6VI-AB-TiY" customClass="PhotoViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhotoViewController" id="6VI-AB-TiY" customClass="PhotoViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="m4g-hA-bCN">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="L6Z-h2-dCk">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="L6Z-h2-dCk">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </imageView>
                             <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LhO-PH-jM2">
@@ -157,30 +156,38 @@
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Vg4-Zr-PoU">
-                                            <rect key="frame" x="8" y="12" width="76" height="30"/>
+                                            <rect key="frame" x="8" y="10" width="76" height="34"/>
                                             <state key="normal" title="DISCARD"/>
+                                            <connections>
+                                                <action selector="discard:" destination="6VI-AB-TiY" eventType="touchUpInside" id="o3y-bV-sul"/>
+                                            </connections>
                                         </button>
-                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkw-cU-e5C">
-                                            <rect key="frame" x="323" y="12" width="44" height="30"/>
+                                        <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkw-cU-e5C">
+                                            <rect key="frame" x="323" y="12" width="44" height="34"/>
                                             <state key="normal" title="SAVE"/>
+                                            <connections>
+                                                <action selector="savePhoto:" destination="6VI-AB-TiY" eventType="touchUpInside" id="8xt-Wc-qBN"/>
+                                            </connections>
                                         </button>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="firstBaseline" secondItem="Tkw-cU-e5C" secondAttribute="baseline" id="46U-4X-ChF"/>
-                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="trailing" secondItem="9xo-pv-rGl" secondAttribute="trailingMargin" id="8Oc-Rk-hBc"/>
-                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="baseline" secondItem="Tkw-cU-e5C" secondAttribute="firstBaseline" id="8WT-1O-Pq3"/>
+                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="9xo-pv-rGl" secondAttribute="trailingMargin" id="8Oc-Rk-hBc"/>
                                         <constraint firstItem="Vg4-Zr-PoU" firstAttribute="centerY" secondItem="9xo-pv-rGl" secondAttribute="centerY" id="DF1-y1-DfG"/>
-                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="top" secondItem="Tkw-cU-e5C" secondAttribute="top" id="Tmu-Gs-gCh"/>
-                                        <constraint firstItem="Vg4-Zr-PoU" firstAttribute="top" secondItem="9xo-pv-rGl" secondAttribute="top" constant="12" id="eFg-TH-1fU"/>
+                                        <constraint firstAttribute="bottom" secondItem="Vg4-Zr-PoU" secondAttribute="bottom" constant="11" id="GHW-KO-0rX"/>
+                                        <constraint firstAttribute="bottom" secondItem="Tkw-cU-e5C" secondAttribute="bottom" constant="9" id="ZnX-Ef-Kam"/>
+                                        <constraint firstItem="Tkw-cU-e5C" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="9xo-pv-rGl" secondAttribute="leadingMargin" id="f5V-WU-kv6"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Vg4-Zr-PoU" secondAttribute="trailingMargin" id="gDy-CH-YRO"/>
                                         <constraint firstItem="Vg4-Zr-PoU" firstAttribute="leading" secondItem="9xo-pv-rGl" secondAttribute="leadingMargin" id="kDm-Vv-JIs"/>
                                     </constraints>
                                 </view>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="55" id="5Ws-5e-ox9"/>
+                                </constraints>
                                 <blurEffect style="light"/>
                             </visualEffectView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="LhO-PH-jM2" firstAttribute="top" secondItem="4SI-4j-2g4" secondAttribute="top" constant="592" id="Apx-1h-E0t"/>
                             <constraint firstAttribute="trailing" secondItem="L6Z-h2-dCk" secondAttribute="trailing" id="RVA-4z-tBS"/>
                             <constraint firstItem="L6Z-h2-dCk" firstAttribute="bottom" secondItem="LhO-PH-jM2" secondAttribute="bottom" id="UTw-mT-prv"/>
                             <constraint firstItem="L6Z-h2-dCk" firstAttribute="bottom" secondItem="4SI-4j-2g4" secondAttribute="bottom" id="aMb-9U-5aA"/>
@@ -191,6 +198,9 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="4SI-4j-2g4"/>
                     </view>
+                    <connections>
+                        <outlet property="imageView" destination="L6Z-h2-dCk" id="dIn-rf-YYN"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="X1f-R7-aZ3" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
