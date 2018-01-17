@@ -19,6 +19,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 child.removeFromParentNode()
             }
         }
+        isInFilteredSide = false
+        didEnterPortal = false
         shouldDisableButtons(true)
     }
     
@@ -32,7 +34,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
-        hidePlaneNodes(false)
+        showARPlanes(true)
+
         tapRecognizer.isEnabled = true
         
         let alert = UIAlertController(title: "", message: "Tap on the plane to add the portal.", preferredStyle: UIAlertControllerStyle.alert)
@@ -185,7 +188,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let plane = planeNode.geometry as? SCNPlane
             else { return }
         
-        
         // Plane estimation may shift the center of a plane relative to its anchor's transform.
         planeNode.simdPosition = float3(planeAnchor.center.x, 0, planeAnchor.center.z)
         
@@ -197,9 +199,24 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
          */
         plane.width = CGFloat(planeAnchor.extent.x)
         plane.height = CGFloat(planeAnchor.extent.z)
+        
+        showARPlanes(nil)
     }
     
-    
+    private func showARPlanes(_ yes: Bool?){
+        for child in sceneView.scene.rootNode.childNodes {
+            if child.name == "plane" {
+                if let yes = yes, yes == true {
+                    child.isHidden = false
+                } else if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
+                    child.isHidden = true
+                } else {
+                    child.isHidden = false
+                }
+            }
+        }
+    }
+
     // MARK: - ARSessionDelegate
     
     func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
@@ -656,8 +673,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let touchPoint = recognizer.location(in: self.view)
         let portal = spawnPortal()
         addToPlane(item: portal, atPoint: touchPoint)
-        hidePlaneNodes(true)
         shouldDisableButtons(false)
+        showARPlanes(nil)
     }
     
     @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
@@ -678,18 +695,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func hidePlaneNodes(_ yes: Bool){
-        // Removes plane child nodes when portal is added.
-        for child in sceneView.scene.rootNode.childNodes {
-            if child.name == "plane" {
-                if yes {
-                    child.isHidden = true
-                } else {
-                    child.isHidden = false
-                }
-            }
-        }
-    }
+
     
     private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
