@@ -10,6 +10,8 @@
 		89900B89200EE1F30090D08E /* PhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89900B88200EE1F30090D08E /* PhotoViewController.swift */; };
 		8996F6D720111B2F0075986F /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D520111B2F0075986F /* spark.png */; };
 		8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D620111B2F0075986F /* ParticlesPink.scnp */; };
+		8996F6DF20111D950075986F /* smoke.png in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6DD20111D950075986F /* smoke.png */; };
+		8996F6E020111D950075986F /* ParticlesSmoke.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6DE20111D950075986F /* ParticlesSmoke.scnp */; };
 		89BE3CFA1FFEA9B1009F8636 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */; };
 		89BE3D001FFEA9B1009F8636 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */; };
 		89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3D011FFEA9B1009F8636 /* Main.storyboard */; };
@@ -21,6 +23,8 @@
 		89900B88200EE1F30090D08E /* PhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewController.swift; sourceTree = "<group>"; };
 		8996F6D520111B2F0075986F /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
 		8996F6D620111B2F0075986F /* ParticlesPink.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesPink.scnp; sourceTree = "<group>"; };
+		8996F6DD20111D950075986F /* smoke.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smoke.png; sourceTree = "<group>"; };
+		8996F6DE20111D950075986F /* ParticlesSmoke.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesSmoke.scnp; sourceTree = "<group>"; };
 		89BE3CF61FFEA9B1009F8636 /* Filter-Portal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Filter-Portal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -83,6 +87,8 @@
 		89CAEAD92011193E00790C32 /* Particles */ = {
 			isa = PBXGroup;
 			children = (
+				8996F6DD20111D950075986F /* smoke.png */,
+				8996F6DE20111D950075986F /* ParticlesSmoke.scnp */,
 				8996F6D520111B2F0075986F /* spark.png */,
 				8996F6D620111B2F0075986F /* ParticlesPink.scnp */,
 			);
@@ -149,7 +155,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				89BE3D081FFEA9B1009F8636 /* LaunchScreen.storyboard in Resources */,
+				8996F6DF20111D950075986F /* smoke.png in Resources */,
 				8996F6D720111B2F0075986F /* spark.png in Resources */,
+				8996F6E020111D950075986F /* ParticlesSmoke.scnp in Resources */,
 				8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */,
 				89BE3D051FFEA9B1009F8636 /* Assets.xcassets in Resources */,
 				89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */,
