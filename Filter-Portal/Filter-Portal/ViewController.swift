@@ -204,7 +204,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
-            let filteredCIImage = filter.apply(with: filterIndex, to: portal, for: frameImage, ofCamera: frame)
+            let cropShape = spacialArrangement.evaluateCropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
+            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex)
             let cgImage = convert(filteredCIImage)
             sceneView.scene.background.contents = cgImage
         } else {
@@ -221,190 +222,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private let context = CIContext()
+//    private let context = CIContext()
 
     private func convert(_ ciImage: CIImage) -> CGImage? {
-        let frameCGImage = context.createCGImage(ciImage, from: ciImage.extent)
-        context.clearCaches()
+        let frameCGImage = CIContext().createCGImage(ciImage, from: ciImage.extent)
+        CIContext().clearCaches()
         return frameCGImage
     }
-    
-//    /// Applies selected filters to the portal / scene.
-//    private func applyFilter(to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
-//        if let ciFilter = CIFilter(name: portalCIFilter[filterIndex]){
-//            
-//            // Adds additional conditions for some filters.
-//            switch portalCIFilter[filterIndex] {
-//            case "CILineOverlay":
-//                ciFilter.setValue(1.0, forKey: kCIInputContrastKey)
-//                ciFilter.setValue(0.2, forKey: "inputThreshold")
-//                ciFilter.setValue(1, forKey: "inputEdgeIntensity")
-//                ciFilter.setValue(0.6, forKey: "inputNRSharpness")
-//                ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
-//            case "CIGaussianBlur":
-//                ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
-//            case "CICrystallize":
-//                ciFilter.setValue(5.0, forKey: kCIInputRadiusKey)
-//            default:
-//                break
-//            }
-//            
-//            // Calculates if portal node is in camera's frustum.
-//            guard let cameraView = sceneView.pointOfView else { return }
-//            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
-//            
-//            // Defines shape of cropping image.
-//            let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
-//            // Defines relative size of portal to visible scene.
-//            isPortalFrameBiggerThanCameras = compare(cropShape, with: frameImage.extent)
-//            // Defines point of view standing position.
-//            isInFilteredSide = getTheSide(of: cameraView, relativeTo: portal)
-//            
-//            
-//            // Portal frame is not bigger than camera's frame - portal edges are visible.
-//            if isPortalVisible && !isPortalFrameBiggerThanCameras {
-//                
-//                // Gets cropped image.
-//                let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
-//                
-//                // If camera is in non filtered side - looking to portal from outside.
-//                if !isInFilteredSide {
-//                    var tempImage = CIImage()
-//                    
-//                    if shouldBeScaled {
-//                        tempImage = scale(image: croppedImage, by: 1/scaleFactor)
-//                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
-//                    } else {
-//                        ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-//                    }
-//                    
-//                    if let result = ciFilter.outputImage {
-//                        if let background = backgroundImage(for: tempImage) {
-//                            var croppedWithBackgroundImage = result.composited(over: background)
-//                            // This filter image needs to be scaled down always.
-//                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-//                            tempImage = croppedWithBackgroundImage.composited(over: frameImage)
-//                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        } else {
-//                            if shouldBeScaled {
-//                                tempImage = scale(image: result, by: scaleFactor)
-//                                tempImage = tempImage.composited(over: frameImage)
-//                            } else {
-//                                tempImage = result.composited(over: frameImage)
-//                            }
-//                            
-//                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    }
-//                    
-//                // If camera is in filtered side, inside portal.
-//                } else {
-//                    if shouldBeScaled {
-//                        let tempImage = scale(image: frameImage, by: 1/scaleFactor)
-//                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
-//                    } else {
-//                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-//                    }
-//                    
-//                    if let result = ciFilter.outputImage {
-//                        if let background = backgroundImage(for: frameImage) {
-//                            var croppedWithBackgroundImage = result.composited(over: background)
-//                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-//                            let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
-//                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        } else {
-//                            var tempImage = CIImage()
-//                            
-//                            if shouldBeScaled {
-//                                tempImage = scale(image: result, by: scaleFactor)
-//                                tempImage = croppedImage.composited(over: tempImage)
-//                            } else {
-//                                tempImage = croppedImage.composited(over: result)
-//                            }
-//                            
-//                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    }
-//                }
-//                
-//            // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
-//            } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
-//                
-//                if isInFilteredSide {
-//                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-//                    sceneView.scene.background.contents = frameCGImage
-//                    context.clearCaches()
-//                } else {
-//                    if shouldBeScaled {
-//                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
-//                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
-//                        if let result = ciFilter.outputImage {
-//                            
-//                            if let background = backgroundImage(for: tempImage) {
-//                                tempImage = result.composited(over: background)
-//                            } else {
-//                                tempImage = result
-//                            }
-//                            
-//                            tempImage = scale(image: tempImage, by: scaleFactor)
-//                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    } else {
-//                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-//                        
-//                        if let result = ciFilter.outputImage {
-//                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    }
-//                }
-//            } else {
-//                
-//                if !isInFilteredSide {
-//                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-//                    sceneView.scene.background.contents = frameCGImage
-//                    context.clearCaches()
-//                } else {
-//                    if shouldBeScaled {
-//                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
-//                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
-//                        if let result = ciFilter.outputImage {
-//                            
-//                            if let background = backgroundImage(for: tempImage) {
-//                                tempImage = result.composited(over: background)
-//                            } else {
-//                                tempImage = result
-//                            }
-//                            
-//                            tempImage = scale(image: tempImage, by: scaleFactor)
-//                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    } else {
-//                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-//                        
-//                        if let result = ciFilter.outputImage {
-//                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
-//                            sceneView.scene.background.contents = frameCGImage
-//                            context.clearCaches()
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
     
     /// Saves photo.
     private func presentPhotoVC(with photo: CIImage) {
@@ -484,103 +308,81 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     
-    /// Converts and then projects node points into camera captured image plane.
-    private func getProjection(of nodes: SCNNode, _ vector: SCNVector3, in imageSize: CGSize, in imageCameraFrame: ARCamera) -> CGPoint {
-        let convertedVector = sceneView.scene.rootNode.convertPosition(vector, from: nodes)
-        let convertedToFloatVector = vector_float3.init(convertedVector)
-        let projection = imageCameraFrame.projectPoint(convertedToFloatVector, orientation: .portrait, viewportSize: imageSize)
-        return projection
-    }
-    
-    /// Returns portal projection `UIBezierPath` in camera captured image.
-    private func currentPositionInCameraFrame(of portal: SCNNode, in imageCameraFrame: ARCamera, with imageSize: CGSize) -> UIBezierPath {
-        
-        // Composing too left and bottom right corners for the plane from given bounding box instance.
-        let minLeftPoint = SCNVector3.init(portal.boundingBox.min.x, portal.boundingBox.max.y, 0)
-        let maxRightPoint = SCNVector3.init(portal.boundingBox.max.x, portal.boundingBox.min.y, 0)
-
-        // Portal corner point projections to the camera captured image.
-        let projectionMinLeft = getProjection(of: portal, minLeftPoint, in: imageSize, in: imageCameraFrame)
-        let projectionMaxRight = getProjection(of: portal, maxRightPoint, in: imageSize, in: imageCameraFrame)
-        let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
-        let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
-        
-        /// Defines cropping shape, based on portal projection to the camera captured image.
-        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
-        
-        return croppingShape
-    }
-    
-    
-    
-    
-    /// Creates custom closed `UIBezierPath` for 4 points in selected size.
-    private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
-        let path = UIBezierPath()
+//    /// Converts and then projects node points into camera captured image plane.
+//    private func getProjection(of nodes: SCNNode, _ vector: SCNVector3, in imageSize: CGSize, in imageCameraFrame: ARCamera) -> CGPoint {
+//        let convertedVector = sceneView.scene.rootNode.convertPosition(vector, from: nodes)
+//        let convertedToFloatVector = vector_float3.init(convertedVector)
+//        let projection = imageCameraFrame.projectPoint(convertedToFloatVector, orientation: .portrait, viewportSize: imageSize)
+//        return projection
+//    }
 //
-//        /// Mid point of AB line.
-//        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-//                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-//        /// Mid point of BC line.
-//        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-//                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+//    /// Returns portal projection `UIBezierPath` in camera captured image.
+//    private func currentPositionInCameraFrame(of portal: SCNNode, in imageCameraFrame: ARCamera, with imageSize: CGSize) -> UIBezierPath {
 //
-//        if pointBC.y < -200 {
-//            pointBC.y = -200
-//        }
+//        // Composing too left and bottom right corners for the plane from given bounding box instance.
+//        let minLeftPoint = SCNVector3.init(portal.boundingBox.min.x, portal.boundingBox.max.y, 0)
+//        let maxRightPoint = SCNVector3.init(portal.boundingBox.max.x, portal.boundingBox.min.y, 0)
 //
-//        /// Mid point of CD line.
-//        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-//        /// Mid point of DA line.
-//        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+//        // Portal corner point projections to the camera captured image.
+//        let projectionMinLeft = getProjection(of: portal, minLeftPoint, in: imageSize, in: imageCameraFrame)
+//        let projectionMaxRight = getProjection(of: portal, maxRightPoint, in: imageSize, in: imageCameraFrame)
+//        let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
+//        let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
 //
-//        if pointDA.y < -200 {
-//            pointDA.y = -200
-//        }
+//        /// Defines cropping shape, based on portal projection to the camera captured image.
+//        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
 //
-//        path.move(to: pointAB)
-//        path.addQuadCurve(to: pointBC, controlPoint: pointB)
-//        path.addQuadCurve(to: pointCD, controlPoint: pointC)
-//        path.addQuadCurve(to: pointDA, controlPoint: pointD)
-//        path.addQuadCurve(to: pointAB, controlPoint: pointA)
-
-        
-        path.move(to: pointA)
-        path.addLine(to: pointB)
-        path.addLine(to: pointC)
-        path.addLine(to: pointD)
-        
-        
-        
-        path.close()
-        
-        return path
-    }
+//        return croppingShape
+//    }
     
-    /// Cropps image using custom shape.
-    private func applyMask(of BezierPath: UIBezierPath, for image: CIImage, in imageSize: CGSize) -> CIImage {
-        // Define graphic context (canvas) to paint on
-        UIGraphicsBeginImageContext(imageSize)
-        let currentGraphicsContext = UIGraphicsGetCurrentContext()!
-        currentGraphicsContext.saveGState()
-        
-        // Flips image upside down to match `UIGraphicsGetCurrentContext`.
-        let transformedImage = image.transformed(by: CGAffineTransform.init(scaleX: 1, y: -1)).transformed(by: CGAffineTransform.init(translationX: 0, y: image.extent.size.height))
-        
-        // Set the clipping mask
-        BezierPath.addClip()
-        let cgImage = context.createCGImage(transformedImage, from: image.extent)!
-        currentGraphicsContext.draw(cgImage, in: image.extent)
-        let maskedImage = UIGraphicsGetImageFromCurrentImageContext()!
-        
-        // Restore previous drawing context
-        currentGraphicsContext.restoreGState()
-        UIGraphicsEndImageContext()
-        
-        return CIImage.init(image: maskedImage)!
-    }
+    
+    
+    
+//    /// Creates custom closed `UIBezierPath` for 4 points in selected size.
+//    private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
+//        let path = UIBezierPath()
+////
+////        /// Mid point of AB line.
+////        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
+////                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
+////        /// Mid point of BC line.
+////        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+////                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+////
+////        if pointBC.y < -200 {
+////            pointBC.y = -200
+////        }
+////
+////        /// Mid point of CD line.
+////        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
+////                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
+////        /// Mid point of DA line.
+////        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+////                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+////
+////        if pointDA.y < -200 {
+////            pointDA.y = -200
+////        }
+////
+////        path.move(to: pointAB)
+////        path.addQuadCurve(to: pointBC, controlPoint: pointB)
+////        path.addQuadCurve(to: pointCD, controlPoint: pointC)
+////        path.addQuadCurve(to: pointDA, controlPoint: pointD)
+////        path.addQuadCurve(to: pointAB, controlPoint: pointA)
+//
+//        
+//        path.move(to: pointA)
+//        path.addLine(to: pointB)
+//        path.addLine(to: pointC)
+//        path.addLine(to: pointD)
+//        
+//        
+//        
+//        path.close()
+//        
+//        return path
+//    }
+    
     
     
     

@@ -22,7 +22,7 @@ struct FilterIdentification {
 struct Filter {
     
     /// Applies selected filters to the portal / scene.
-    func apply(with filterIndex: Int, to portal: SCNNode?, for frameImage: CIImage, ofCamera frame: ARFrame) -> CIImage {
+    func apply(to frameImage: CIImage, withMaskOf cropShape: UIBezierPath, using filterIndex: Int) -> CIImage {
         var filteredImage = CIImage.init()
 
         let filterName = FilterIdentification().name[filterIndex]
@@ -51,8 +51,6 @@ struct Filter {
             guard let cameraView = sceneView.pointOfView else { return }
             isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
             
-            // Defines shape of cropping image.
-            let cropShape = currentPositionInCameraFrame(of: portal, in: frame.camera, with: frameImage.extent.size)
             // Defines relative size of portal to visible scene.
             isPortalFrameBiggerThanCameras = compare(cropShape, with: frameImage.extent)
             // Defines point of view standing position.
@@ -66,17 +64,17 @@ struct Filter {
                 
                 // If camera is in non filtered side - looking to portal from outside.
                 if !isInFilteredSide {
-                    var tempImage = CIImage()
+                    var tempScaledImage = CIImage()
                     
                     if shouldBeScaled {
-                        tempImage = scale(image: croppedImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
+                        tempScaledImage = scale(image: croppedImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
                     } else {
                         ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
                     }
                     
                     if let result = ciFilter.outputImage {
-                        if let background = backgroundImage(for: tempImage) {
+                        if let background = backgroundImage(for: tempScaledImage) {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             // This filter image needs to be scaled down always.
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
@@ -84,8 +82,8 @@ struct Filter {
                             
                         } else {
                             if shouldBeScaled {
-                                tempImage = scale(image: result, by: scaleFactor)
-                                filteredImage = tempImage.composited(over: frameImage)
+                                tempScaledImage = scale(image: result, by: scaleFactor)
+                                filteredImage = tempScaledImage.composited(over: frameImage)
                             } else {
                                 filteredImage = result.composited(over: frameImage)
                             }
@@ -95,8 +93,8 @@ struct Filter {
                     // If camera is in filtered side, inside portal.
                 } else {
                     if shouldBeScaled {
-                        let tempImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
+                        let tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
+                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                     }
@@ -108,11 +106,9 @@ struct Filter {
                             filteredImage = croppedImage.composited(over: croppedWithBackgroundImage)
                          
                         } else {
-                            var tempImage = CIImage()
-                            
                             if shouldBeScaled {
-                                tempImage = scale(image: result, by: scaleFactor)
-                                filteredImage = croppedImage.composited(over: tempImage)
+                                let tempScaledImage = scale(image: result, by: scaleFactor)
+                                filteredImage = croppedImage.composited(over: tempScaledImage)
                             } else {
                                 filteredImage = croppedImage.composited(over: result)
                             }
@@ -128,24 +124,25 @@ struct Filter {
                    
                 } else {
                     if shouldBeScaled {
-                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
+                        var tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
+                        
+                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
+                        
                         if let result = ciFilter.outputImage {
                             
-                            if let background = backgroundImage(for: tempImage) {
-                                tempImage = result.composited(over: background)
+                            if let background = backgroundImage(for: tempScaledImage) {
+                                tempScaledImage = result.composited(over: background)
                             } else {
-                                tempImage = result
+                                tempScaledImage = result
                             }
                             
-                            filteredImage = scale(image: tempImage, by: scaleFactor)
+                            filteredImage = scale(image: tempScaledImage, by: scaleFactor)
                         }
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                         
                         if let result = ciFilter.outputImage {
                             filteredImage = result
-                          
                         }
                     }
                 }
@@ -156,17 +153,18 @@ struct Filter {
                   
                 } else {
                     if shouldBeScaled {
-                        var tempImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempImage, forKey: kCIInputImageKey)
+                        var tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
+                        
+                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
+                        
                         if let result = ciFilter.outputImage {
                             
-                            if let background = backgroundImage(for: tempImage) {
-                                tempImage = result.composited(over: background)
+                            if let background = backgroundImage(for: tempScaledImage) {
+                                tempScaledImage = result.composited(over: background)
                             } else {
-                                tempImage = result
+                                tempScaledImage = result
                             }
-                            
-                            filteredImage = scale(image: tempImage, by: scaleFactor)
+                            filteredImage = scale(image: tempScaledImage, by: scaleFactor)
                           
                         }
                     } else {
@@ -179,8 +177,35 @@ struct Filter {
                 }
             }
         }
+        
         return filteredImage
     }
+    
+    /// Cropps image using custom shape.
+    private func applyMask(of BezierPath: UIBezierPath, for image: CIImage, in imageSize: CGSize) -> CIImage {
+        // Define graphic context (canvas) to paint on
+        UIGraphicsBeginImageContext(imageSize)
+        let currentGraphicsContext = UIGraphicsGetCurrentContext()!
+        currentGraphicsContext.saveGState()
+        
+        // Flips image upside down to match `UIGraphicsGetCurrentContext`.
+        let transformedImage = image.transformed(by: CGAffineTransform.init(scaleX: 1, y: -1)).transformed(by: CGAffineTransform.init(translationX: 0, y: image.extent.size.height))
+        
+        // Set the clipping mask
+        BezierPath.addClip()
+        let cgImage = CIContext().createCGImage(transformedImage, from: image.extent)!
+        currentGraphicsContext.draw(cgImage, in: image.extent)
+        let maskedImage = UIGraphicsGetImageFromCurrentImageContext()!
+        
+        // Restore previous drawing context
+        currentGraphicsContext.restoreGState()
+        UIGraphicsEndImageContext()
+        
+        CIContext().clearCaches()
+        
+        return CIImage.init(image: maskedImage)!
+    }
+    
     
     private func backgroundImage(for croppedImage: CIImage) -> CIImage? {
         guard filterIndex == 1 else { return nil }
