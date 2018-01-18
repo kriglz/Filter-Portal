@@ -700,6 +700,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         portal = PortalNode.setup(with: portalSize)
         guard let portal = portal else { return }
+        portal.addFrame(of: "ParticlesPink.scnp", for: portalSize)
         sceneView.scene.rootNode.addChildNode(portal)
     }
 
@@ -723,26 +724,26 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     
     
-    private func addFrame(for item: SCNNode) {
-        let emitter =  SCNParticleSystem.init(named: "ParticlesPink.scnp", inDirectory: nil)
-        
-        let path2 = UIBezierPath()
-        path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
-        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
-        path2.close()
-        
-        let shape = SCNShape(path: path2, extrusionDepth: 0)
-        emitter?.emitterShape = shape
-        item.addParticleSystem(emitter!)
-    }
+//    private func addFrame(for item: SCNNode) {
+//        let emitter =  SCNParticleSystem.init(named: "ParticlesPink.scnp", inDirectory: nil)
+//
+//        let path2 = UIBezierPath()
+//        path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
+//        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
+//        path2.close()
+//
+//        let shape = SCNShape(path: path2, extrusionDepth: 0)
+//        emitter?.emitterShape = shape
+//        item.addParticleSystem(emitter!)
+//    }
 }
 
