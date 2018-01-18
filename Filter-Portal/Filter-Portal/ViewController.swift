@@ -576,31 +576,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         path.close()
         
-//        addFrame(for: path)
-        
         return path
-    }
-    
-    private func addFrame(for path: UIBezierPath) {
-        let shape = SCNShape(path: path, extrusionDepth: 0.05)
-        
-        // Material colors
-        let cyanMaterial = SCNMaterial()
-        cyanMaterial.diffuse.contents = UIColor.cyan
-        let anOrangeMaterial = SCNMaterial()
-        anOrangeMaterial.diffuse.contents = UIColor.orange
-        let aPurpleMaterial = SCNMaterial()
-        aPurpleMaterial.diffuse.contents = UIColor.purple
-        
-        shape.materials = [cyanMaterial, anOrangeMaterial, aPurpleMaterial]
-        let shapeNode = SCNNode(geometry: shape)
-        
-        guard let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) else { return }
-        
-        shapeNode.position = portal.position
-        shapeNode.orientation = portal.orientation
-        sceneView.scene.rootNode.addChildNode(shapeNode)
-        print("frame added")
     }
     
     /// Cropps image using custom shape.
@@ -686,7 +662,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
         let touchPoint = recognizer.location(in: self.view)
         let portal = spawnPortal()
+        
         addToPlane(item: portal, atPoint: touchPoint)
+
         shouldDisableButtons(false)
         showARPlanes(nil)
     }
@@ -722,6 +700,59 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         return portal
     }
     
+//    private func addFrame(for node: SCNNode) {
+//
+//        if let frame = sceneView.scene.rootNode.childNode(withName: "frame", recursively: true) {
+//            frame.removeFromParentNode()
+//        }
+//
+//        let path2 = UIBezierPath()
+//        path2.move(to: CGPoint(x: 0, y: 0))
+//        path2.addLine(to: CGPoint(x: 0.1, y: 0.1))
+//        path2.addLine(to: CGPoint(x: 0.1, y: 0.4))
+//        path2.addLine(to: CGPoint(x: 0.4, y: 0.4))
+//        path2.addLine(to: CGPoint(x: 0.4, y: 0.1))
+//        path2.addLine(to: CGPoint(x: 0.1, y: 0.1))
+////        path2.addLine(to: CGPoint(x: 0, y: 0))
+////
+////        path2.addLine(to: CGPoint(x: 0, y: 0.5))
+////        path2.addLine(to: CGPoint(x: 0.5, y: 0.5))
+////        path2.addLine(to: CGPoint(x: 0.5, y: 0))
+////        path2.addLine(to: CGPoint(x: 0, y: 0))
+//
+//        path2.close()
+////        let shape = SCNShape(path: path2, extrusionDepth: 0.2)
+//
+//
+//        let frame = SCNShape.init(path: path2, extrusionDepth: 0.1)
+//        frame.firstMaterial?.isDoubleSided = true
+////        frame.chamferMode = SCNChamferMode.both
+//
+//        let path = UIBezierPath()
+//        path.move(to: CGPoint(x: 1, y: 0))
+//        path.move(to: CGPoint(x: 0.5, y: 0.5))
+//
+//        path.addLine(to: CGPoint(x: 0, y: 1))
+//        path.close()
+//
+////        frame.chamferProfile = path
+////        frame.chamferRadius  = 0.05
+//
+//        // Material colors
+////        let material = SCNMaterial()
+////        material.diffuse.contents = UIColor.blue
+////
+////        frame.materials = [material]
+//
+//        let frameNode = SCNNode(geometry: frame)
+//        frameNode.position = node.position
+//        frameNode.orientation = node.orientation
+//        frameNode.name = "frame"
+//
+//        print(frameNode.position)
+//        sceneView.scene.rootNode.addChildNode(frameNode)
+//    }
+    
     func addToPlane(item: SCNNode, atPoint point: CGPoint) {
         let hits = sceneView.hitTest(point, types: .existingPlane)
         
@@ -740,6 +771,29 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     child.removeFromParentNode()
                 }
             }
+            
+            let emitter =  SCNParticleSystem.init(named: "FireParticles.scnp", inDirectory: nil)
+        
+
+            let path2 = UIBezierPath()
+            path2.move(to: CGPoint(x: 0, y: 0))
+            path2.addLine(to: CGPoint(x: 0, y: 0.5))
+            path2.addLine(to: CGPoint(x: 0.5, y: 0.5))
+            path2.addLine(to: CGPoint(x: 0.5, y: 0))
+            path2.addLine(to: CGPoint(x: 0.499, y: 0))
+            path2.addLine(to: CGPoint(x: 0.499, y: 0.499))
+            path2.addLine(to: CGPoint(x: 0.001, y: 0.499))
+            path2.addLine(to: CGPoint(x: 0.001, y: 0))
+
+            path2.close()
+            
+            let shape = SCNShape(path: path2, extrusionDepth: 0)
+        
+            
+            emitter?.emitterShape = shape
+            
+            item.addParticleSystem(emitter!)
+            
             sceneView.scene.rootNode.addChildNode(item)
         }
     }

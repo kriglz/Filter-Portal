@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13770" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="udC-mq-1Kf">
-    <device id="retina5_5" orientation="portrait">
+    <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
@@ -15,11 +15,11 @@
             <objects>
                 <viewController id="BV1-FR-VrT" customClass="ViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="aUX-A6-b9h">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="C9T-vs-BRq">
-                                <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                                 <connections>
                                     <outlet property="delegate" destination="BV1-FR-VrT" id="H3F-Xu-99a"/>
                                 </connections>
@@ -58,7 +58,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HJa-Es-9Bn">
-                                <rect key="frame" x="157" y="636" width="100" height="90"/>
+                                <rect key="frame" x="137.5" y="567" width="100" height="90"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="90" id="GsD-CN-9xq"/>
                                     <constraint firstAttribute="width" constant="100" id="Ule-hg-eSh"/>
@@ -69,13 +69,13 @@
                                 </connections>
                             </button>
                             <visualEffectView opaque="NO" clipsSubviews="YES" alpha="0.90000000000000002" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
-                                <rect key="frame" x="109.66666666666669" y="301.66666666666669" width="194" height="133"/>
+                                <rect key="frame" x="90" y="267" width="194" height="133"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="BOu-hj-fzL">
                                     <rect key="frame" x="0.0" y="0.0" width="194" height="133"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="text" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gBq-mx-UQs">
-                                            <rect key="frame" x="82.333333333333329" y="60" width="29" height="21"/>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gBq-mx-UQs">
+                                            <rect key="frame" x="97" y="71" width="0.0" height="0.0"/>
                                             <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
                                             <color key="textColor" name="selectedMenuItemTextColor" catalog="System" colorSpace="catalog"/>
                                             <nil key="highlightedColor"/>
@@ -149,16 +149,16 @@
             <objects>
                 <viewController storyboardIdentifier="PhotoViewController" id="6VI-AB-TiY" customClass="PhotoViewController" customModule="Filter_Portal" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="m4g-hA-bCN">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="L6Z-h2-dCk">
-                                <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </imageView>
                             <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LhO-PH-jM2">
-                                <rect key="frame" x="0.0" y="681" width="414" height="55"/>
+                                <rect key="frame" x="0.0" y="612" width="375" height="55"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="9xo-pv-rGl">
-                                    <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="55"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Vg4-Zr-PoU">
@@ -172,7 +172,7 @@
                                             </connections>
                                         </button>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkw-cU-e5C">
-                                            <rect key="frame" x="362" y="10.666666666666629" width="44" height="34"/>
+                                            <rect key="frame" x="323" y="10.5" width="44" height="34"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="44" id="jod-Yf-2Af"/>
                                             </constraints>
@@ -236,9 +236,9 @@
         </scene>
     </scenes>
     <resources>
-        <image name="add" width="218" height="183"/>
-        <image name="filters" width="218" height="183"/>
-        <image name="refresh" width="218" height="183"/>
-        <image name="takephoto" width="218" height="183"/>
+        <image name="add" width="327" height="274"/>
+        <image name="filters" width="327" height="274"/>
+        <image name="refresh" width="327" height="274"/>
+        <image name="takephoto" width="327" height="274"/>
     </resources>
 </document>
