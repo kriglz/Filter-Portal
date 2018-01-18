@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		89900B89200EE1F30090D08E /* PhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89900B88200EE1F30090D08E /* PhotoViewController.swift */; };
-		89900B8C200FCA8F0090D08E /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = 89900B8A200FCA8F0090D08E /* spark.png */; };
-		89900B8D200FCA8F0090D08E /* FireParticles.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 89900B8B200FCA8F0090D08E /* FireParticles.scnp */; };
+		8996F6D720111B2F0075986F /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D520111B2F0075986F /* spark.png */; };
+		8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D620111B2F0075986F /* ParticlesPink.scnp */; };
 		89BE3CFA1FFEA9B1009F8636 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */; };
 		89BE3D001FFEA9B1009F8636 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */; };
 		89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3D011FFEA9B1009F8636 /* Main.storyboard */; };
@@ -19,8 +19,8 @@
 
 /* Begin PBXFileReference section */
 		89900B88200EE1F30090D08E /* PhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewController.swift; sourceTree = "<group>"; };
-		89900B8A200FCA8F0090D08E /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = spark.png; path = "/Users/kriglz/Desktop/Filter-Portal/Filter-Portal/Filter-Portal/spark.png"; sourceTree = "<absolute>"; };
-		89900B8B200FCA8F0090D08E /* FireParticles.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; name = FireParticles.scnp; path = "/Users/kriglz/Desktop/Filter-Portal/Filter-Portal/Filter-Portal/FireParticles.scnp"; sourceTree = "<absolute>"; };
+		8996F6D520111B2F0075986F /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
+		8996F6D620111B2F0075986F /* ParticlesPink.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesPink.scnp; sourceTree = "<group>"; };
 		89BE3CF61FFEA9B1009F8636 /* Filter-Portal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Filter-Portal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -63,7 +63,7 @@
 				89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */,
 				89BE3D011FFEA9B1009F8636 /* Main.storyboard */,
 				89900B88200EE1F30090D08E /* PhotoViewController.swift */,
-				89CAEAD92011193E00790C32 /* New Group */,
+				89CAEAD92011193E00790C32 /* Particles */,
 				89BE3D0F1FFEAA99009F8636 /* Supporting Files */,
 				89BE3D091FFEA9B1009F8636 /* Info.plist */,
 			);
@@ -80,13 +80,13 @@
 			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		89CAEAD92011193E00790C32 /* New Group */ = {
+		89CAEAD92011193E00790C32 /* Particles */ = {
 			isa = PBXGroup;
 			children = (
-				89900B8B200FCA8F0090D08E /* FireParticles.scnp */,
-				89900B8A200FCA8F0090D08E /* spark.png */,
+				8996F6D520111B2F0075986F /* spark.png */,
+				8996F6D620111B2F0075986F /* ParticlesPink.scnp */,
 			);
-			path = "New Group";
+			path = Particles;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -149,8 +149,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				89BE3D081FFEA9B1009F8636 /* LaunchScreen.storyboard in Resources */,
-				89900B8D200FCA8F0090D08E /* FireParticles.scnp in Resources */,
-				89900B8C200FCA8F0090D08E /* spark.png in Resources */,
+				8996F6D720111B2F0075986F /* spark.png in Resources */,
+				8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */,
 				89BE3D051FFEA9B1009F8636 /* Assets.xcassets in Resources */,
 				89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */,
 			);

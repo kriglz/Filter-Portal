@@ -724,7 +724,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     private func addFrame(for item: SCNNode) {
-            let emitter =  SCNParticleSystem.init(named: "FireParticles.scnp", inDirectory: nil)
+            let emitter =  SCNParticleSystem.init(named: "ParticlesPink.scnp", inDirectory: nil)
             
             let path2 = UIBezierPath()
             path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
