@@ -34,6 +34,12 @@ class PortalNode: SCNNode {
     }
     
     public func addFrame(of particles: String, for portalSize: CGSize) {
+        
+        guard self.particleSystems != nil else {
+            self.removeAllParticleSystems()
+            return
+        }
+        
         let emitter =  SCNParticleSystem.init(named: particles, inDirectory: nil)
         
         let path = UIBezierPath()

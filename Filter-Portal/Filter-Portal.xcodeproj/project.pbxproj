@@ -16,6 +16,8 @@
 		89BE3D051FFEA9B1009F8636 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3D041FFEA9B1009F8636 /* Assets.xcassets */; };
 		89BE3D081FFEA9B1009F8636 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 89BE3D061FFEA9B1009F8636 /* LaunchScreen.storyboard */; };
 		89BE5F2720113108009BE212 /* PortalNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE5F2620113108009BE212 /* PortalNode.swift */; };
+		89BE5F2920114B19009BE212 /* Filter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE5F2820114B19009BE212 /* Filter.swift */; };
+		89BE5F2B201154D7009BE212 /* SpacialArrangement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE5F2A201154D7009BE212 /* SpacialArrangement.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		89BE3D071FFEA9B1009F8636 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89BE3D091FFEA9B1009F8636 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		89BE5F2620113108009BE212 /* PortalNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalNode.swift; sourceTree = "<group>"; };
+		89BE5F2820114B19009BE212 /* Filter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Filter.swift; sourceTree = "<group>"; };
+		89BE5F2A201154D7009BE212 /* SpacialArrangement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacialArrangement.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +67,8 @@
 			isa = PBXGroup;
 			children = (
 				89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */,
+				89BE5F2820114B19009BE212 /* Filter.swift */,
+				89BE5F2A201154D7009BE212 /* SpacialArrangement.swift */,
 				89BE5F2620113108009BE212 /* PortalNode.swift */,
 				89BE3D011FFEA9B1009F8636 /* Main.storyboard */,
 				89900B88200EE1F30090D08E /* PhotoViewController.swift */,
@@ -167,8 +173,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				89BE3D001FFEA9B1009F8636 /* ViewController.swift in Sources */,
+				89BE5F2920114B19009BE212 /* Filter.swift in Sources */,
 				89BE3CFA1FFEA9B1009F8636 /* AppDelegate.swift in Sources */,
 				89900B89200EE1F30090D08E /* PhotoViewController.swift in Sources */,
+				89BE5F2B201154D7009BE212 /* SpacialArrangement.swift in Sources */,
 				89BE5F2720113108009BE212 /* PortalNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
