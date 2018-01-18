@@ -53,10 +53,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBOutlet weak var filterButton: UIButton!
     @IBOutlet weak var resetButton: UIButton!
+    
     @IBOutlet weak var sessionInfoView: UIView!
     @IBOutlet weak var sessionInfoLabel: UILabel!
     @IBOutlet weak var sceneView: ARSCNView!
+    
     private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
+    private var portal: PortalNode?
+
     private let context = CIContext()
     private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIEdges", "CIColorPosterize", "CIColorInvert"]
     private var filterIndex: Int = 4 {
@@ -189,20 +193,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         showARPlanes(nil)
     }
-    
-    private func showARPlanes(_ yes: Bool?){
-        for child in sceneView.scene.rootNode.childNodes {
-            if child.name == "plane" {
-                if let yes = yes, yes == true {
-                    child.isHidden = false
-                } else if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
-                    child.isHidden = true
-                } else {
-                    child.isHidden = false
-                }
-            }
-        }
-    }
 
     // MARK: - ARSessionDelegate
     
@@ -235,14 +225,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if shouldSavePhoto {
             presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
-    }
-    
-    /// Saves photo.
-    private func presentPhotoVC(with photo: CIImage) {
-        shouldSavePhoto = false
-        let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
-        photoViewController.capturedCIImage = photo
-        self.navigationController?.present(photoViewController, animated: true, completion: nil)
     }
     
     /// Applies selected filters to the portal / scene.
@@ -417,6 +399,28 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                             context.clearCaches()
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    /// Saves photo.
+    private func presentPhotoVC(with photo: CIImage) {
+        shouldSavePhoto = false
+        let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
+        photoViewController.capturedCIImage = photo
+        self.navigationController?.present(photoViewController, animated: true, completion: nil)
+    }
+    
+    private func showARPlanes(_ yes: Bool?){
+        for child in sceneView.scene.rootNode.childNodes {
+            if child.name == "plane" {
+                if let yes = yes, yes == true {
+                    child.isHidden = false
+                } else if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
+                    child.isHidden = true
+                } else {
+                    child.isHidden = false
                 }
             }
         }
@@ -659,16 +663,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
     
-    @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
-        let touchPoint = recognizer.location(in: self.view)
-        let portal = spawnPortal()
-        
-        addToPlane(item: portal, atPoint: touchPoint)
-
-        shouldDisableButtons(false)
-        showARPlanes(nil)
-    }
-    
     @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
         switch recognizer.state {
         case .changed, .ended:
@@ -687,62 +681,68 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func spawnPortal() -> SCNNode {
-        let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
-        let material = SCNMaterial()
-        material.transparency = 0.0
-        material.isDoubleSided = true
-        portalPlane.materials = [material]
-        let portal = SCNNode(geometry: portalPlane)
-        portal.name = "portal"
-        return portal
+    @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
+        let touchPoint = recognizer.location(in: self.view)
+        
+        guard let hitPosition = getHitPoint(at: touchPoint), let cameraOrientation = cameraOrientation else { return }
+        
+        spawnPortal()
+        let position = SCNVector3.init(hitPosition.x, hitPosition.y + Float(portalSize.height * 1.5), hitPosition.z)
+        portal?.updatePosition(to: position, with: cameraOrientation)
+        
+        shouldDisableButtons(false)
+        showARPlanes(nil)
     }
- 
-    func addToPlane(item: SCNNode, atPoint point: CGPoint) {
+   
+    private func spawnPortal() {
+        if let portal = portal {
+            portal.removeFromParentNode()
+        }
+        portal = PortalNode.setup(with: portalSize)
+        guard let portal = portal else { return }
+        sceneView.scene.rootNode.addChildNode(portal)
+    }
+
+    private func getHitPoint(at point: CGPoint) -> SCNVector3? {
         let hits = sceneView.hitTest(point, types: .existingPlane)
         
-        if hits.count > 0, let firstHit = hits.first {
-            let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
-            item.position = hitPosition
-            
-            item.position.y += Float(portalSize.height)
-            if let camera = sceneView.pointOfView {
-                // Set plane position to face the camera.
-                item.orientation = SCNVector4.init(0.0, camera.orientation.y, 0.0, camera.orientation.w)
-            }
-            
-            for child in sceneView.scene.rootNode.childNodes {
-                if child.name == "portal" {
-                    child.removeFromParentNode()
-                }
-            }
- 
-            addFrame(for: item)
-            
-            sceneView.scene.rootNode.addChildNode(item)
-        }
+        guard let firstHit = hits.first else { return nil }
+        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
+        
+        return hitPosition
     }
     
+    private var cameraPoint: SCNVector3? {
+        guard let camera = sceneView.pointOfView else { return nil }
+        return camera.position
+    }
+    private var cameraOrientation: SCNQuaternion? {
+        guard let camera = sceneView.pointOfView else { return nil }
+        return camera.orientation
+    }
+    
+    
+    
     private func addFrame(for item: SCNNode) {
-            let emitter =  SCNParticleSystem.init(named: "ParticlesSmoke.scnp", inDirectory: nil)
-            
-            let path2 = UIBezierPath()
-            path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
-            path2.close()
-
-            let shape = SCNShape(path: path2, extrusionDepth: 0)
-            emitter?.emitterShape = shape
-            item.addParticleSystem(emitter!)
+        let emitter =  SCNParticleSystem.init(named: "ParticlesPink.scnp", inDirectory: nil)
+        
+        let path2 = UIBezierPath()
+        path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
+        path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
+        path2.close()
+        
+        let shape = SCNShape(path: path2, extrusionDepth: 0)
+        emitter?.emitterShape = shape
+        item.addParticleSystem(emitter!)
     }
 }
 
