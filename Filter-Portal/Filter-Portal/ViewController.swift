@@ -687,8 +687,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-
-    
     private func spawnPortal() -> SCNNode {
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
@@ -719,37 +717,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 }
             }
  
-            addFrame(for: item, isItParticle: true)
+            addFrame(for: item)
             
             sceneView.scene.rootNode.addChildNode(item)
         }
     }
     
-    private func addFrame(for item: SCNNode, isItParticle: Bool) {
-        if isItParticle {
+    private func addFrame(for item: SCNNode) {
             let emitter =  SCNParticleSystem.init(named: "FireParticles.scnp", inDirectory: nil)
-
-//            emitter?.particleColorVariation
-
-//            emitter?.particleColorVariation = SCNVector4Make(0, 0, 0.5, 0)
-//
-//            let colorAnimation = CABasicAnimation(keyPath:  "particleColor")
-//            colorAnimation.fromValue = UIColor.black.cgColor
-//            colorAnimation.toValue = UIColor.red.cgColor
-//            colorAnimation.duration = 2.0
-//            colorAnimation.repeatCount = .greatestFiniteMagnitude
-//
-//            emitter?.addAnimation(colorAnimation, forKey: nil)
-        
-            
-            
-            let colorAnimation = CAKeyframeAnimation.init(keyPath: "emitter?.particleColor")//emitter?.particleColor)
-            let colorArray = [UIColor.black.cgColor, UIColor.red.cgColor]
-            colorAnimation.values = colorArray
-            colorAnimation.calculationMode = kCAAnimationPaced
-            colorAnimation.duration = 1.0
-            
-            emitter?.addAnimation(colorAnimation, forKey: nil)
             
             let path2 = UIBezierPath()
             path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
@@ -768,47 +743,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let shape = SCNShape(path: path2, extrusionDepth: 0)
             emitter?.emitterShape = shape
             item.addParticleSystem(emitter!)
-            
-        } else {
-            
-            let path2 = UIBezierPath()
-            path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.05-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width+0.05-portalSize.width/2, y: -0.05-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: portalSize.width+0.05-portalSize.width/2, y: portalSize.height+0.05-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: -0.05-portalSize.width/2, y: portalSize.height+0.05-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: -0.05-portalSize.width/2, y: -0.05-portalSize.height/2))
-            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.05-portalSize.height/2))
-            path2.close()
-            
-            
-            let shape = SCNBox.init(width: 0.5, height: 0.5, length: 0.5, chamferRadius: 0)//SCNShape(path: path2, extrusionDepth: 0.1)
-            //            shape.chamferRadius = 0.025
-            //            shape.chamferMode = .both
-            
-            let material = SCNMaterial()
-            material.diffuse.contents = UIColor.blue
-            //            material.roughness.contents = NSNumber(value: 0.5)
-            //            material.metalness.contents = NSNumber(value: 0.5)
-            
-            
-            material.lightingModel = .physicallyBased
-            shape.materials = [material]
-            
-            //            emitter?.emitterShape = shape
-            
-            //            item.addParticleSystem(emitter!)
-            let shapeNode = SCNNode.init(geometry: shape)
-            
-            shapeNode.position = item.position
-            
-            sceneView.scene.rootNode.addChildNode(shapeNode)
-            //            item.addChildNode(shapeNode)
-        }
     }
 }
 
