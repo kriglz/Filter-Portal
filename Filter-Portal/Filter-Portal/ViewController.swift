@@ -537,40 +537,40 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
+//
+//        /// Mid point of AB line.
+//        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
+//        /// Mid point of BC line.
+//        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+//
+//        if pointBC.y < -200 {
+//            pointBC.y = -200
+//        }
+//
+//        /// Mid point of CD line.
+//        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
+//        /// Mid point of DA line.
+//        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+//                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+//
+//        if pointDA.y < -200 {
+//            pointDA.y = -200
+//        }
+//
+//        path.move(to: pointAB)
+//        path.addQuadCurve(to: pointBC, controlPoint: pointB)
+//        path.addQuadCurve(to: pointCD, controlPoint: pointC)
+//        path.addQuadCurve(to: pointDA, controlPoint: pointD)
+//        path.addQuadCurve(to: pointAB, controlPoint: pointA)
+
         
-        /// Mid point of AB line.
-        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-        /// Mid point of BC line.
-        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
-
-        if pointBC.y < -200 {
-            pointBC.y = -200
-        }
-
-        /// Mid point of CD line.
-        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-        /// Mid point of DA line.
-        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
-
-        if pointDA.y < -200 {
-            pointDA.y = -200
-        }
-
-        path.move(to: pointAB)
-        path.addQuadCurve(to: pointBC, controlPoint: pointB)
-        path.addQuadCurve(to: pointCD, controlPoint: pointC)
-        path.addQuadCurve(to: pointDA, controlPoint: pointD)
-        path.addQuadCurve(to: pointAB, controlPoint: pointA)
-
-        
-//        path.move(to: pointA)
-//        path.addLine(to: pointB)
-//        path.addLine(to: pointC)
-//        path.addLine(to: pointD)
+        path.move(to: pointA)
+        path.addLine(to: pointB)
+        path.addLine(to: pointC)
+        path.addLine(to: pointD)
         
         
         
@@ -699,60 +699,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         portal.name = "portal"
         return portal
     }
-    
-//    private func addFrame(for node: SCNNode) {
-//
-//        if let frame = sceneView.scene.rootNode.childNode(withName: "frame", recursively: true) {
-//            frame.removeFromParentNode()
-//        }
-//
-//        let path2 = UIBezierPath()
-//        path2.move(to: CGPoint(x: 0, y: 0))
-//        path2.addLine(to: CGPoint(x: 0.1, y: 0.1))
-//        path2.addLine(to: CGPoint(x: 0.1, y: 0.4))
-//        path2.addLine(to: CGPoint(x: 0.4, y: 0.4))
-//        path2.addLine(to: CGPoint(x: 0.4, y: 0.1))
-//        path2.addLine(to: CGPoint(x: 0.1, y: 0.1))
-////        path2.addLine(to: CGPoint(x: 0, y: 0))
-////
-////        path2.addLine(to: CGPoint(x: 0, y: 0.5))
-////        path2.addLine(to: CGPoint(x: 0.5, y: 0.5))
-////        path2.addLine(to: CGPoint(x: 0.5, y: 0))
-////        path2.addLine(to: CGPoint(x: 0, y: 0))
-//
-//        path2.close()
-////        let shape = SCNShape(path: path2, extrusionDepth: 0.2)
-//
-//
-//        let frame = SCNShape.init(path: path2, extrusionDepth: 0.1)
-//        frame.firstMaterial?.isDoubleSided = true
-////        frame.chamferMode = SCNChamferMode.both
-//
-//        let path = UIBezierPath()
-//        path.move(to: CGPoint(x: 1, y: 0))
-//        path.move(to: CGPoint(x: 0.5, y: 0.5))
-//
-//        path.addLine(to: CGPoint(x: 0, y: 1))
-//        path.close()
-//
-////        frame.chamferProfile = path
-////        frame.chamferRadius  = 0.05
-//
-//        // Material colors
-////        let material = SCNMaterial()
-////        material.diffuse.contents = UIColor.blue
-////
-////        frame.materials = [material]
-//
-//        let frameNode = SCNNode(geometry: frame)
-//        frameNode.position = node.position
-//        frameNode.orientation = node.orientation
-//        frameNode.name = "frame"
-//
-//        print(frameNode.position)
-//        sceneView.scene.rootNode.addChildNode(frameNode)
-//    }
-    
+ 
     func addToPlane(item: SCNNode, atPoint point: CGPoint) {
         let hits = sceneView.hitTest(point, types: .existingPlane)
         
@@ -771,30 +718,96 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     child.removeFromParentNode()
                 }
             }
-            
-            let emitter =  SCNParticleSystem.init(named: "FireParticles.scnp", inDirectory: nil)
-        
-
-            let path2 = UIBezierPath()
-            path2.move(to: CGPoint(x: 0, y: 0))
-            path2.addLine(to: CGPoint(x: 0, y: 0.5))
-            path2.addLine(to: CGPoint(x: 0.5, y: 0.5))
-            path2.addLine(to: CGPoint(x: 0.5, y: 0))
-            path2.addLine(to: CGPoint(x: 0.499, y: 0))
-            path2.addLine(to: CGPoint(x: 0.499, y: 0.499))
-            path2.addLine(to: CGPoint(x: 0.001, y: 0.499))
-            path2.addLine(to: CGPoint(x: 0.001, y: 0))
-
-            path2.close()
-            
-            let shape = SCNShape(path: path2, extrusionDepth: 0)
-        
-            
-            emitter?.emitterShape = shape
-            
-            item.addParticleSystem(emitter!)
+ 
+            addFrame(for: item, isItParticle: true)
             
             sceneView.scene.rootNode.addChildNode(item)
+        }
+    }
+    
+    private func addFrame(for item: SCNNode, isItParticle: Bool) {
+        if isItParticle {
+            let emitter =  SCNParticleSystem.init(named: "FireParticles.scnp", inDirectory: nil)
+
+//            emitter?.particleColorVariation
+
+//            emitter?.particleColorVariation = SCNVector4Make(0, 0, 0.5, 0)
+//
+//            let colorAnimation = CABasicAnimation(keyPath:  "particleColor")
+//            colorAnimation.fromValue = UIColor.black.cgColor
+//            colorAnimation.toValue = UIColor.red.cgColor
+//            colorAnimation.duration = 2.0
+//            colorAnimation.repeatCount = .greatestFiniteMagnitude
+//
+//            emitter?.addAnimation(colorAnimation, forKey: nil)
+        
+            
+            
+            let colorAnimation = CAKeyframeAnimation.init(keyPath: "emitter?.particleColor")//emitter?.particleColor)
+            let colorArray = [UIColor.black.cgColor, UIColor.red.cgColor]
+            colorAnimation.values = colorArray
+            colorAnimation.calculationMode = kCAAnimationPaced
+            colorAnimation.duration = 1.0
+            
+            emitter?.addAnimation(colorAnimation, forKey: nil)
+            
+            let path2 = UIBezierPath()
+            path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: -0.01-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width+0.01-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: portalSize.height+0.01-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
+            path2.close()
+
+            let shape = SCNShape(path: path2, extrusionDepth: 0)
+            emitter?.emitterShape = shape
+            item.addParticleSystem(emitter!)
+            
+        } else {
+            
+            let path2 = UIBezierPath()
+            path2.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: portalSize.height-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: 0-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0.01-portalSize.width/2, y: -0.05-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width+0.05-portalSize.width/2, y: -0.05-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: portalSize.width+0.05-portalSize.width/2, y: portalSize.height+0.05-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: -0.05-portalSize.width/2, y: portalSize.height+0.05-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: -0.05-portalSize.width/2, y: -0.05-portalSize.height/2))
+            path2.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.05-portalSize.height/2))
+            path2.close()
+            
+            
+            let shape = SCNBox.init(width: 0.5, height: 0.5, length: 0.5, chamferRadius: 0)//SCNShape(path: path2, extrusionDepth: 0.1)
+            //            shape.chamferRadius = 0.025
+            //            shape.chamferMode = .both
+            
+            let material = SCNMaterial()
+            material.diffuse.contents = UIColor.blue
+            //            material.roughness.contents = NSNumber(value: 0.5)
+            //            material.metalness.contents = NSNumber(value: 0.5)
+            
+            
+            material.lightingModel = .physicallyBased
+            shape.materials = [material]
+            
+            //            emitter?.emitterShape = shape
+            
+            //            item.addParticleSystem(emitter!)
+            let shapeNode = SCNNode.init(geometry: shape)
+            
+            shapeNode.position = item.position
+            
+            sceneView.scene.rootNode.addChildNode(shapeNode)
+            //            item.addChildNode(shapeNode)
         }
     }
 }

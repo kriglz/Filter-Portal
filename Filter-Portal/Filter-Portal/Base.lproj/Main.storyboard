@@ -68,7 +68,7 @@
                                     <action selector="takeAPhoto:" destination="BV1-FR-VrT" eventType="touchUpInside" id="DGk-s9-K8o"/>
                                 </connections>
                             </button>
-                            <visualEffectView opaque="NO" clipsSubviews="YES" alpha="0.90000000000000002" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
+                            <visualEffectView opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vlo-f7-vEM">
                                 <rect key="frame" x="90" y="267" width="194" height="133"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="BOu-hj-fzL">
                                     <rect key="frame" x="0.0" y="0.0" width="194" height="133"/>
