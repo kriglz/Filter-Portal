@@ -20,15 +20,16 @@ struct FilterIdentification {
 }
 
 struct Filter {
-
+    
     /// Applies selected filters to the portal / scene.
-    func apply(with filterIndex: Int, to portal: SCNNode, for frameImage: CIImage, ofCamera frame: ARFrame) {
-        
+    func apply(with filterIndex: Int, to portal: SCNNode?, for frameImage: CIImage, ofCamera frame: ARFrame) -> CIImage {
+        var filteredImage = CIImage.init()
+
         let filterName = FilterIdentification().name[filterIndex]
         
         if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
             
-            var shouldBeScales: Bool = false
+            var shouldBeScaled: Bool = false
             var scaleFactor: CGFloat = 0.0
             
             // Adds additional conditions for some filters.
@@ -39,10 +40,10 @@ struct Filter {
                 ciFilter.setValue(1, forKey: "inputEdgeIntensity")
                 ciFilter.setValue(0.6, forKey: "inputNRSharpness")
                 ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
-                shouldBeScales = true
+                shouldBeScaled = true
                 scaleFactor = 4.0
             default:
-                shouldBeScales = false
+                shouldBeScaled = false
                 break
             }
             
@@ -56,7 +57,6 @@ struct Filter {
             isPortalFrameBiggerThanCameras = compare(cropShape, with: frameImage.extent)
             // Defines point of view standing position.
             isInFilteredSide = getTheSide(of: cameraView, relativeTo: portal)
-            
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
             if isPortalVisible && !isPortalFrameBiggerThanCameras {
@@ -80,21 +80,15 @@ struct Filter {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             // This filter image needs to be scaled down always.
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                            tempImage = croppedWithBackgroundImage.composited(over: frameImage)
-                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            
                         } else {
                             if shouldBeScaled {
                                 tempImage = scale(image: result, by: scaleFactor)
-                                tempImage = tempImage.composited(over: frameImage)
+                                filteredImage = tempImage.composited(over: frameImage)
                             } else {
-                                tempImage = result.composited(over: frameImage)
+                                filteredImage = result.composited(over: frameImage)
                             }
-                            
-                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
                         }
                     }
                     
@@ -111,23 +105,17 @@ struct Filter {
                         if let background = backgroundImage(for: frameImage) {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                            let newImage = croppedImage.composited(over: croppedWithBackgroundImage)
-                            let frameCGImage = context.createCGImage(newImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = croppedImage.composited(over: croppedWithBackgroundImage)
+                         
                         } else {
                             var tempImage = CIImage()
                             
                             if shouldBeScaled {
                                 tempImage = scale(image: result, by: scaleFactor)
-                                tempImage = croppedImage.composited(over: tempImage)
+                                filteredImage = croppedImage.composited(over: tempImage)
                             } else {
-                                tempImage = croppedImage.composited(over: result)
+                                filteredImage = croppedImage.composited(over: result)
                             }
-                            
-                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
                         }
                     }
                 }
@@ -136,9 +124,8 @@ struct Filter {
             } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
                 
                 if isInFilteredSide {
-                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-                    sceneView.scene.background.contents = frameCGImage
-                    context.clearCaches()
+                    filteredImage = frameImage
+                   
                 } else {
                     if shouldBeScaled {
                         var tempImage = scale(image: frameImage, by: 1/scaleFactor)
@@ -151,27 +138,22 @@ struct Filter {
                                 tempImage = result
                             }
                             
-                            tempImage = scale(image: tempImage, by: scaleFactor)
-                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = scale(image: tempImage, by: scaleFactor)
                         }
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                         
                         if let result = ciFilter.outputImage {
-                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = result
+                          
                         }
                     }
                 }
             } else {
                 
                 if !isInFilteredSide {
-                    let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-                    sceneView.scene.background.contents = frameCGImage
-                    context.clearCaches()
+                     filteredImage = frameImage
+                  
                 } else {
                     if shouldBeScaled {
                         var tempImage = scale(image: frameImage, by: 1/scaleFactor)
@@ -184,23 +166,20 @@ struct Filter {
                                 tempImage = result
                             }
                             
-                            tempImage = scale(image: tempImage, by: scaleFactor)
-                            let frameCGImage = context.createCGImage(tempImage, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = scale(image: tempImage, by: scaleFactor)
+                          
                         }
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
                         
                         if let result = ciFilter.outputImage {
-                            let frameCGImage = context.createCGImage(result, from: frameImage.extent)
-                            sceneView.scene.background.contents = frameCGImage
-                            context.clearCaches()
+                            filteredImage = result
                         }
                     }
                 }
             }
         }
+        return filteredImage
     }
     
     private func backgroundImage(for croppedImage: CIImage) -> CIImage? {

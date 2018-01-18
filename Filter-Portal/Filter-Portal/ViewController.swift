@@ -10,8 +10,6 @@ import UIKit
 import SceneKit
 import ARKit
 
-
-
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func resetScene(_ sender: UIButton) {
@@ -48,8 +46,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         shouldSavePhoto = true
     }
     
-    private let filter = Filter()
-    
     @IBOutlet weak var photoCaptureButotn: UIButton!
     private var shouldSavePhoto: Bool = false
     private var tapRecognizer = UITapGestureRecognizer()
@@ -64,17 +60,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
     private var portal: PortalNode?
 
-    private let context = CIContext()
-//    private let portalCIFilter: [String] = ["CIPhotoEffectNoir", "CILineOverlay", "CIEdges", "CIColorPosterize", "CIColorInvert"]
+    private let filter = Filter()
     private var filterIndex: Int = 4
     
+    private let spacialArrangement = SpacialArrangement()
     
     private var isPortalFrameBiggerThanCameras = false
     private var isInFilteredSide = false
     private var isPortalVisible = true
     private var didEnterPortal = false
-//    private var shouldBeScaled: Bool = false
-//    private var scaleFactor: CGFloat = 0.0
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -209,16 +204,29 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
-            filter.apply(with: filterIndex, to: portal, for: frameImage, ofCamera: frame)
+            let filteredCIImage = filter.apply(with: filterIndex, to: portal, for: frameImage, ofCamera: frame)
+            let cgImage = convert(filteredCIImage)
+            sceneView.scene.background.contents = cgImage
         } else {
-            let frameCGImage = context.createCGImage(frameImage, from: frameImage.extent)
-            sceneView.scene.background.contents = frameCGImage
-            context.clearCaches()
+            let cgImage = convert(frameImage)
+            sceneView.scene.background.contents = cgImage
         }
+        
+        //
+        // ADD ERROR MESSAGE WITH NOT BEING ABLE TO RENDER CONTENT
+        //
         
         if shouldSavePhoto {
             presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
+    }
+    
+    private let context = CIContext()
+
+    private func convert(_ ciImage: CIImage) -> CGImage? {
+        let frameCGImage = context.createCGImage(ciImage, from: ciImage.extent)
+        context.clearCaches()
+        return frameCGImage
     }
     
 //    /// Applies selected filters to the portal / scene.
