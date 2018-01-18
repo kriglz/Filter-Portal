@@ -64,8 +64,6 @@
 				89BE3D011FFEA9B1009F8636 /* Main.storyboard */,
 				89900B88200EE1F30090D08E /* PhotoViewController.swift */,
 				89CAEAD92011193E00790C32 /* New Group */,
-				89900B8B200FCA8F0090D08E /* FireParticles.scnp */,
-				89900B8A200FCA8F0090D08E /* spark.png */,
 				89BE3D0F1FFEAA99009F8636 /* Supporting Files */,
 				89BE3D091FFEA9B1009F8636 /* Info.plist */,
 			);
@@ -85,6 +83,8 @@
 		89CAEAD92011193E00790C32 /* New Group */ = {
 			isa = PBXGroup;
 			children = (
+				89900B8B200FCA8F0090D08E /* FireParticles.scnp */,
+				89900B8A200FCA8F0090D08E /* spark.png */,
 			);
 			path = "New Group";
 			sourceTree = "<group>";
