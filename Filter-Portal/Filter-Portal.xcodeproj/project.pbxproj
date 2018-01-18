@@ -19,8 +19,8 @@
 
 /* Begin PBXFileReference section */
 		89900B88200EE1F30090D08E /* PhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewController.swift; sourceTree = "<group>"; };
-		89900B8A200FCA8F0090D08E /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
-		89900B8B200FCA8F0090D08E /* FireParticles.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = FireParticles.scnp; sourceTree = "<group>"; };
+		89900B8A200FCA8F0090D08E /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = spark.png; path = "/Users/kriglz/Desktop/Filter-Portal/Filter-Portal/Filter-Portal/spark.png"; sourceTree = "<absolute>"; };
+		89900B8B200FCA8F0090D08E /* FireParticles.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; name = FireParticles.scnp; path = "/Users/kriglz/Desktop/Filter-Portal/Filter-Portal/Filter-Portal/FireParticles.scnp"; sourceTree = "<absolute>"; };
 		89BE3CF61FFEA9B1009F8636 /* Filter-Portal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Filter-Portal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		89BE3CF91FFEA9B1009F8636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		89BE3CFF1FFEA9B1009F8636 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
