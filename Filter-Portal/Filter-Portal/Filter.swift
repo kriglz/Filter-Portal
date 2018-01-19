@@ -35,8 +35,6 @@ struct Filter {
         
         let filterName = FilterIdentification().name[filterIndex]
         
-        
-        
         if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
 
             // Adds additional conditions for some filters.
@@ -61,28 +59,20 @@ struct Filter {
 
                 // If camera is in non filtered side - looking to portal from outside.
                 if !isInFilteredSide {
-                    
-                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-                    if let result = ciFilter.outputImage {
-                        return result.composited(over: frameImage)
-                    }
+                    let filteredImage = filtered(croppedImage, with: ciFilter)
+                    return filteredImage.composited(over: frameImage)
                     
                 // If camera is in filtered side, inside portal.
                 } else {
-                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                    if let result = ciFilter.outputImage {
-                        return croppedImage.composited(over: result)
-                    }
+                    let filteredImage = filtered(frameImage, with: ciFilter)
+                    return croppedImage.composited(over: filteredImage)
                 }
                 
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
             } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
                 
                 if !isInFilteredSide {
-                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                    if let result = ciFilter.outputImage {
-                        return result
-                    }
+                    return filtered(frameImage, with: ciFilter)
                 } else {
                     return frameImage
                 }
@@ -92,10 +82,7 @@ struct Filter {
                 if !isInFilteredSide {
                    return frameImage
                 } else {
-                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                    if let result = ciFilter.outputImage {
-                        return result
-                    }
+                    return filtered(frameImage, with: ciFilter)
                 }
             }
         }
@@ -103,8 +90,17 @@ struct Filter {
         return frameImage
     }
     
+    /// Applies CI Filter to the CI image.
+    private func filtered(_ image: CIImage, with ciFilter: CIFilter) -> CIImage {
+        ciFilter.setValue(image, forKey: kCIInputImageKey)
+        if let result = ciFilter.outputImage {
+            return result
+        } else {
+            return image
+        }
+    }
+    
     let context = CIContext()
-
     
     /// Cropps image using custom shape.
     private func applyMask(of BezierPath: UIBezierPath, for image: CIImage) -> CIImage {
