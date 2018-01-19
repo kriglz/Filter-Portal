@@ -11,12 +11,16 @@ import Photos
 import MobileCoreServices
 
 class PhotoViewController: UIViewController {
-
+    
+    @IBOutlet weak var imageView: UIImageView!
+    
     private var imageJPEGData: Data?
     
     public var capturedCIImage: CIImage?
+
     
-    @IBOutlet weak var imageView: UIImageView!
+    
+    // - Actions.
 
     @IBAction func discard(_ sender: UIButton) {
         self.dismiss(animated: true, completion: nil)
@@ -41,6 +45,10 @@ class PhotoViewController: UIViewController {
         }
     }
     
+    
+    
+    // - View setup.
+    
     override func viewWillAppear(_ animated: Bool) {
         guard let capturedCIImage = capturedCIImage, let jpegData = jpegData(for: capturedCIImage, attachments: nil) else {
             print("Unable to create JPEG photo")
@@ -51,6 +59,10 @@ class PhotoViewController: UIViewController {
         imageView?.image = UIImage(data: jpegData)
     }
 
+    
+    
+    // - Private functions.
+    
     private func jpegData(for ciImage: CIImage, attachments: CFDictionary?) -> Data? {
         let ciContext = CIContext()
         guard let renderedCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {

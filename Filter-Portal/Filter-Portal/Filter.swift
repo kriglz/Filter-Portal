@@ -10,6 +10,7 @@ import UIKit
 import ARKit
 
 struct FilterIdentification {
+    
     let name: Dictionary<Int, String> = [
         0: "CIPhotoEffectNoir",
         1: "CILineOverlay",
@@ -186,7 +187,6 @@ struct Filter {
         // Flips image upside down to match `UIGraphicsGetCurrentContext`.
         let transformedImage = image.transformed(by: CGAffineTransform.init(scaleX: 1, y: -1)).transformed(by: CGAffineTransform.init(translationX: 0, y: image.extent.size.height))
         
-        
         // Set the clipping mask
         BezierPath.addClip()
         let cgImage = context.createCGImage(transformedImage, from: image.extent)!
@@ -201,7 +201,6 @@ struct Filter {
         
         return CIImage.init(image: maskedImage)!
     }
-    
     
     private func backgroundImage(for croppedImage: CIImage, using filterIndex: Int) -> CIImage? {
         guard filterIndex == 1 else { return nil }
