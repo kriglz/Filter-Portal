@@ -82,35 +82,36 @@ struct SpacialArrangement {
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
     private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
         let path = UIBezierPath()
-        //
-        //        /// Mid point of AB line.
-        //        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-        //                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-        //        /// Mid point of BC line.
-        //        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-        //                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
-        //
-        //        if pointBC.y < -200 {
-        //            pointBC.y = -200
-        //        }
-        //
-        //        /// Mid point of CD line.
-        //        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-        //                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-        //        /// Mid point of DA line.
-        //        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-        //                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
-        //
-        //        if pointDA.y < -200 {
-        //            pointDA.y = -200
-        //        }
-        //
-        //        path.move(to: pointAB)
-        //        path.addQuadCurve(to: pointBC, controlPoint: pointB)
-        //        path.addQuadCurve(to: pointCD, controlPoint: pointC)
-        //        path.addQuadCurve(to: pointDA, controlPoint: pointD)
-        //        path.addQuadCurve(to: pointAB, controlPoint: pointA)
+//
+//                /// Mid point of AB line.
+//                let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
+//                                      y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
+//                /// Mid point of BC line.
+//                var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
+//                                      y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
+//        
+//                if pointBC.y < -200 {
+//                    pointBC.y = -200
+//                }
+//
+//                /// Mid point of CD line.
+//                let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
+//                                      y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
+//                /// Mid point of DA line.
+//                var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
+//                                      y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
+//
+//                if pointDA.y < -200 {
+//                    pointDA.y = -200
+//                }
+//
+//                path.move(to: pointAB)
+//                path.addQuadCurve(to: pointBC, controlPoint: pointB)
+//                path.addQuadCurve(to: pointCD, controlPoint: pointC)
+//                path.addQuadCurve(to: pointDA, controlPoint: pointD)
+//                path.addQuadCurve(to: pointAB, controlPoint: pointA)
         
+
         path.move(to: pointA)
         path.addLine(to: pointB)
         path.addLine(to: pointC)

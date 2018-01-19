@@ -115,7 +115,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         UIApplication.shared.isIdleTimerDisabled = true
         
         // Show debug UI to view performance metrics (e.g. frames per second).
-        sceneView.showsStatistics = true
+//        sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
         // Adds tap gesture recognizer to add portal to the scene.
@@ -271,7 +271,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         if shouldSavePhoto {
-            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
+            let image = sceneView.snapshot()
+            presentPhotoVC(with: CIImage.init(image: image)!)
+
+//            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
         }
 
     }
