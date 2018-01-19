@@ -9,8 +9,9 @@
 import UIKit
 import SceneKit
 import ARKit
+import ReplayKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RPPreviewViewControllerDelegate {
     
     @IBOutlet weak var sceneView: ARSCNView!
     
@@ -47,6 +48,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     private var isPortalVisible = true
     private var didEnterPortal = false
     
+    let recorder = RPScreenRecorder.shared()
+    private var isRecording = false
     
     // - Actions
     
@@ -79,10 +82,70 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBAction func takeAPhoto(_ sender: UIButton) {
-        shouldSavePhoto = true
+//        shouldSavePhoto = true
+        
+        if !isRecording {
+            startRecording()
+        } else {
+            stopRecording()
+        }
     }
     
+    private func startRecording() {
+        guard recorder.isAvailable else {
+            print("Recording is not available at this time.")
+            return
+        }
+        
+        recorder.startRecording{ [weak self] (error) in
+            guard error == nil else {
+                print("There was an error starting the recording.")
+                return
+            }
+            
+            print("Started Recording Successfully")
+            self?.isRecording = true
+        }
+        
+        photoCaptureButotn.setImage(UIImage.init(named: "takephotoRecording"), for: .normal)   
+    }
   
+    private func stopRecording() {
+        recorder.stopRecording { [weak self] (preview, error) in
+            print("Stopped recording")
+            
+            guard preview != nil else {
+                print("Preview controller is not available.")
+                return
+            }
+            
+            let alert = UIAlertController(title: "Recording Finished", message: "Would you like to edit or delete your recording?", preferredStyle: .alert)
+            
+            let deleteAction = UIAlertAction(title: "Delete", style: .destructive, handler: { (action: UIAlertAction) in
+                self?.recorder.discardRecording(handler: { () -> Void in
+                    print("Recording suffessfully deleted.")
+                })
+            })
+            
+            let editAction = UIAlertAction(title: "Edit", style: .default, handler: { (action: UIAlertAction) -> Void in
+                preview?.previewControllerDelegate = self
+                self?.present(preview!, animated: true, completion: nil)
+            })
+            
+            alert.addAction(editAction)
+            alert.addAction(deleteAction)
+            self?.present(alert, animated: true, completion: nil)
+            
+            self?.isRecording = false
+//            self?.viewReset()
+        }
+        photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
+
+    }
+
+    func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
+        dismiss(animated: true)
+    }
     
     // - View setup.
 
@@ -115,7 +178,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         UIApplication.shared.isIdleTimerDisabled = true
         
         // Show debug UI to view performance metrics (e.g. frames per second).
-//        sceneView.showsStatistics = true
+        sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
         // Adds tap gesture recognizer to add portal to the scene.
@@ -143,6 +206,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if isRecording {
+            stopRecording()
+        }
+    }
     
     
     /// - Tag: UpdateARContent
