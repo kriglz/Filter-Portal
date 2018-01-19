@@ -63,54 +63,49 @@ struct Filter {
                     if shouldBeScaled {
                         tempScaledImage = scale(image: croppedImage, by: 1/scaleFactor)
                         ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
-                    } else {
-                        ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-                    }
-                    
-                    if let result = ciFilter.outputImage {
-                        if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
-                            var croppedWithBackgroundImage = result.composited(over: background)
-                            // This filter image needs to be scaled down always.
-                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                            filteredImage = croppedWithBackgroundImage.composited(over: frameImage)
-                            
-                        } else {
-                            if shouldBeScaled {
+                        
+                        if let result = ciFilter.outputImage {
+                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
+                                var croppedWithBackgroundImage = result.composited(over: background)
+                                croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
+                                filteredImage = croppedWithBackgroundImage.composited(over: frameImage)
+                            } else {
                                 tempScaledImage = scale(image: result, by: scaleFactor)
                                 filteredImage = tempScaledImage.composited(over: frameImage)
-                            } else {
-                                filteredImage = result.composited(over: frameImage)
                             }
                         }
+                    } else {
+                        ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                        if let result = ciFilter.outputImage {
+                            filteredImage = result.composited(over: frameImage)
+                        }
                     }
-                    
-                    // If camera is in filtered side, inside portal.
+                   
+                // If camera is in filtered side, inside portal.
                 } else {
                     if shouldBeScaled {
                         let tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
                         ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
+                        
+                        if let result = ciFilter.outputImage {
+                            if let background = backgroundImage(for: frameImage, using: filterIndex) {
+                                var backgroundedImage = result.composited(over: background)
+                                backgroundedImage = scale(image: backgroundedImage, by: scaleFactor)
+                                filteredImage = croppedImage.composited(over: backgroundedImage)
+                            } else {
+                                let tempScaledImage = scale(image: result, by: scaleFactor)
+                                filteredImage = tempScaledImage.composited(over: frameImage)
+                            }
+                        }
                     } else {
                         ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                    }
-                    
-                    if let result = ciFilter.outputImage {
-                        if let background = backgroundImage(for: frameImage, using: filterIndex) {
-                            var croppedWithBackgroundImage = result.composited(over: background)
-                            croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                            filteredImage = croppedImage.composited(over: croppedWithBackgroundImage)
-                         
-                        } else {
-                            if shouldBeScaled {
-                                let tempScaledImage = scale(image: result, by: scaleFactor)
-                                filteredImage = croppedImage.composited(over: tempScaledImage)
-                            } else {
-                                filteredImage = croppedImage.composited(over: result)
-                            }
+                        if let result = ciFilter.outputImage {
+                            filteredImage = croppedImage.composited(over: result)
                         }
                     }
                 }
                 
-                // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
+            // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
             } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
                 
                 if isInFilteredSide {
@@ -119,11 +114,9 @@ struct Filter {
                 } else {
                     if shouldBeScaled {
                         var tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
-                        
                         ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
                         
                         if let result = ciFilter.outputImage {
-                            
                             if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
                                 tempScaledImage = result.composited(over: background)
                             } else {
@@ -210,11 +203,12 @@ struct Filter {
             ciColorFilter.setValue(croppedImage, forKeyPath: kCIInputImageKey)
             ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 0), forKeyPath: "inputMinComponents")
             ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 1), forKeyPath: "inputMaxComponents")
-            
+
             if let backgroundImageResult = ciColorFilter.outputImage {
                 return backgroundImageResult
             }
         }
+        
         return nil
     }
     

@@ -45,7 +45,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     // - Actions
     
     @IBAction func resetScene(_ sender: UIButton) {
-        portal?.removeFromParentNode()
+        
+        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+            portal.removeFromParentNode()
+            print("\nremoved")
+        }
+        
+//        portal?.removeFromParentNode()
         isInFilteredSide = false
         didEnterPortal = false
         shouldDisableButtons(true)
@@ -245,11 +251,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             let cgImage = convert(filteredCIImage)
             sceneView.scene.background.contents = cgImage
             
-            
-            if shouldSavePhoto {
-                presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
-            }
-            
         } else {
             let cgImage = convert(frameImage)
             sceneView.scene.background.contents = cgImage
@@ -260,6 +261,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // ADD ERROR MESSAGE WITH NOT BEING ABLE TO RENDER CONTENT
         //
         
+        guard sceneView.scene.background.contents != nil else {
+            print("\n ERROR - background is nil \n")
+            return
+        }
+        
+        if shouldSavePhoto {
+            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
+        }
 
     }
     
