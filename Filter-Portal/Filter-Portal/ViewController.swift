@@ -24,6 +24,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBOutlet weak var resetButton: UIButton!
     
+    @IBOutlet weak var planeButton: UIButton!
+    
     private var shouldSavePhoto: Bool = false
     
     private var tapRecognizer = UITapGestureRecognizer()
@@ -40,21 +42,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let context = CIContext()
     
+    private var isPortalFrameBiggerThanCameras = false
+    private var isInFilteredSide = false
+    private var isPortalVisible = true
+    private var didEnterPortal = false
     
     
     // - Actions
     
     @IBAction func resetScene(_ sender: UIButton) {
-        
-//        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-//            portal.removeFromParentNode()
-//        }
-        
-        if let portal = portal {
-            portal.removeFromParentNode()
+        if let portalNode = portal {
+            portalNode.removeFromParentNode()
+            portal = nil
         }
-        portal = nil
-
         isInFilteredSide = false
         didEnterPortal = false
         shouldDisableButtons(true)
@@ -69,13 +69,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
-        showARPlanes(true)
-
-        tapRecognizer.isEnabled = true
-        
-        let alert = UIAlertController(title: "", message: "Tap on the plane to add the portal.", preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: nil))
-        self.present(alert, animated: true, completion: nil)
+        let midPoint = CGPoint(x: self.view.frame.size.width / 2, y: self.view.frame.size.height * 3 / 4)
+        guard let hitPoint = getHitPoint(at: midPoint) else { return }
+        spawnPortal(at: hitPoint)
+        shouldDisableButtons(false)
+        showARPlanes(nil)
     }
     
     @IBAction func takeAPhoto(_ sender: UIButton) {
@@ -122,6 +120,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let tapHandler = #selector(handleTapGesture(recognizer:))
         tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
+        
+        planeButton.isEnabled = false
+        planeButton.alpha = 0.7
         tapRecognizer.isEnabled = false
 
         // Adds pinch gesture to scale the node.
@@ -132,14 +133,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+   
         if portal != nil {
             shouldDisableButtons(false)
         } else {
             shouldDisableButtons(true)
         }
     }
-    
+
     
     
     /// - Tag: UpdateARContent
@@ -207,6 +208,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
         guard let frame = session.currentFrame else { return }
         updateSessionInfoLabel(for: frame, trackingState: frame.camera.trackingState)
+        
+        planeButton.isEnabled = true
+        planeButton.alpha = 0.7
+        tapRecognizer.isEnabled = true
     }
     
     func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
@@ -217,11 +222,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
-    
-    private var isPortalFrameBiggerThanCameras = false
-    private var isInFilteredSide = false
-    private var isPortalVisible = true
-    private var didEnterPortal = false
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
@@ -362,33 +362,35 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
         let touchPoint = recognizer.location(in: self.view)
-        
-        guard let hitPosition = getHitPoint(at: touchPoint), let cameraOrientation = cameraOrientation else { return }
-        
-        spawnPortal()
-        let position = SCNVector3.init(hitPosition.x, hitPosition.y + Float(portalSize.height * 1.5), hitPosition.z)
-        portal?.updatePosition(to: position, with: cameraOrientation)
-        
+        guard let hitPosition = getHitPoint(at: touchPoint) else { return }
+        spawnPortal(at: hitPosition)
         shouldDisableButtons(false)
         showARPlanes(nil)
     }
    
-    private func spawnPortal() {
-        if let portal = portal {
-            portal.removeFromParentNode()
+    private func spawnPortal(at position: SCNVector3) {
+        if let portalNode = portal {
+            portalNode.removeFromParentNode()
+            portal = nil
         }
-        portal = nil
+        
+        guard let cameraOrientation = cameraOrientation else { return }
+
         portal = PortalNode.setup(with: portalSize)
         guard let portal = portal else { return }
         portal.addFrame(of: "ParticlesPink.scnp", for: portalSize)
+        portal.updatePosition(to: position, with: cameraOrientation)
+
         sceneView.scene.rootNode.addChildNode(portal)
+        
+        print(portal.position)
     }
 
     private func getHitPoint(at point: CGPoint) -> SCNVector3? {
         let hits = sceneView.hitTest(point, types: .existingPlane)
         
         guard let firstHit = hits.first else { return nil }
-        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y, firstHit.worldTransform.columns.3.z)
+        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y + Float(portalSize.height * 1.2), firstHit.worldTransform.columns.3.z)
         
         return hitPosition
     }
@@ -400,7 +402,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         self.navigationController?.present(photoViewController, animated: true, completion: nil)
     }
     
-    private func showARPlanes(_ yes: Bool?){
+    private func showARPlanes(_ yes: Bool?) {
         for child in sceneView.scene.rootNode.childNodes {
             if child.name == "plane" {
                 if let yes = yes, yes == true {

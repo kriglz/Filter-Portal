@@ -125,6 +125,7 @@
                     <connections>
                         <outlet property="filterButton" destination="Udm-jl-Xvc" id="j1R-i5-sa8"/>
                         <outlet property="photoCaptureButotn" destination="HJa-Es-9Bn" id="UXm-ti-tHL"/>
+                        <outlet property="planeButton" destination="Zkl-uP-lp2" id="I7a-BF-MMn"/>
                         <outlet property="resetButton" destination="SAc-bW-iOG" id="mJY-QO-JyS"/>
                         <outlet property="sceneView" destination="C9T-vs-BRq" id="mVk-aC-eEo"/>
                         <outlet property="sessionInfoLabel" destination="gBq-mx-UQs" id="4HY-Jb-YPi"/>
