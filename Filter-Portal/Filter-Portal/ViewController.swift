@@ -13,11 +13,7 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func resetScene(_ sender: UIButton) {
-        for child in sceneView.scene.rootNode.childNodes {
-            if child.name == "portal" {
-                child.removeFromParentNode()
-            }
-        }
+        portal?.removeFromParentNode()
         isInFilteredSide = false
         didEnterPortal = false
         shouldDisableButtons(true)
@@ -115,7 +111,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
+        if portal != nil {
             shouldDisableButtons(false)
         } else {
             shouldDisableButtons(true)
@@ -271,7 +267,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             if child.name == "plane" {
                 if let yes = yes, yes == true {
                     child.isHidden = false
-                } else if sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) != nil {
+                } else if portal != nil {
                     child.isHidden = true
                 } else {
                     child.isHidden = false
