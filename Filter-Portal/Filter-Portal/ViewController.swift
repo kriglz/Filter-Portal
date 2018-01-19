@@ -66,6 +66,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         } else {
             filterIndex = 0
         }
+        
+        portal?.addFrame(of: filterIndex, for: portalSize)
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
@@ -375,15 +377,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
         
         guard let cameraOrientation = cameraOrientation else { return }
-
         portal = PortalNode.setup(with: portalSize)
-        guard let portal = portal else { return }
-        portal.addFrame(of: "ParticlesPink.scnp", for: portalSize)
-        portal.updatePosition(to: position, with: cameraOrientation)
-
-        sceneView.scene.rootNode.addChildNode(portal)
         
-        print(portal.position)
+        guard let portal = portal else { return }
+        portal.addFrame(of: filterIndex, for: portalSize)
+        portal.updatePosition(to: position, with: cameraOrientation)
+        sceneView.scene.rootNode.addChildNode(portal)
     }
 
     private func getHitPoint(at point: CGPoint) -> SCNVector3? {

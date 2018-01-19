@@ -33,14 +33,15 @@ class PortalNode: SCNNode {
         self.orientation = SCNVector4.init(0.0, orientation.y, 0.0, orientation.w)
     }
     
-    public func addFrame(of particles: String, for portalSize: CGSize) {
+    public func addFrame(of particlesIndex: Int, for portalSize: CGSize) {
         
-        guard self.particleSystems == nil else {
+        if self.particleSystems != nil {
             self.removeAllParticleSystems()
-            return
         }
-              
-        let emitter =  SCNParticleSystem.init(named: particles, inDirectory: nil)
+        
+        guard let filterFrameName = FilterIdentification().frameName[particlesIndex] else { return }
+                
+        let emitter =  SCNParticleSystem.init(named: filterFrameName, inDirectory: nil)
         
         let path = UIBezierPath()
         path.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))

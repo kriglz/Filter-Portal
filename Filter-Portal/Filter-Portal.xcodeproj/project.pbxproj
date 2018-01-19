@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8905238F201260390036BD37 /* ParticlesBlack.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 8905238E201260390036BD37 /* ParticlesBlack.scnp */; };
+		89052391201262010036BD37 /* ParticlesGold.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 89052390201262010036BD37 /* ParticlesGold.scnp */; };
+		89052393201263B50036BD37 /* ParticlesBlackRed.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 89052392201263B50036BD37 /* ParticlesBlackRed.scnp */; };
+		89052395201267D80036BD37 /* ParticlesWhite.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 89052394201267D80036BD37 /* ParticlesWhite.scnp */; };
 		89900B89200EE1F30090D08E /* PhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89900B88200EE1F30090D08E /* PhotoViewController.swift */; };
 		8996F6D720111B2F0075986F /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D520111B2F0075986F /* spark.png */; };
 		8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 8996F6D620111B2F0075986F /* ParticlesPink.scnp */; };
@@ -21,6 +25,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8905238E201260390036BD37 /* ParticlesBlack.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesBlack.scnp; sourceTree = "<group>"; };
+		89052390201262010036BD37 /* ParticlesGold.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesGold.scnp; sourceTree = "<group>"; };
+		89052392201263B50036BD37 /* ParticlesBlackRed.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesBlackRed.scnp; sourceTree = "<group>"; };
+		89052394201267D80036BD37 /* ParticlesWhite.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesWhite.scnp; sourceTree = "<group>"; };
 		89900B88200EE1F30090D08E /* PhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewController.swift; sourceTree = "<group>"; };
 		8996F6D520111B2F0075986F /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
 		8996F6D620111B2F0075986F /* ParticlesPink.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = ParticlesPink.scnp; sourceTree = "<group>"; };
@@ -92,6 +100,10 @@
 		89CAEAD92011193E00790C32 /* Particles */ = {
 			isa = PBXGroup;
 			children = (
+				8905238E201260390036BD37 /* ParticlesBlack.scnp */,
+				89052392201263B50036BD37 /* ParticlesBlackRed.scnp */,
+				89052394201267D80036BD37 /* ParticlesWhite.scnp */,
+				89052390201262010036BD37 /* ParticlesGold.scnp */,
 				8996F6D520111B2F0075986F /* spark.png */,
 				8996F6D620111B2F0075986F /* ParticlesPink.scnp */,
 			);
@@ -157,11 +169,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89052395201267D80036BD37 /* ParticlesWhite.scnp in Resources */,
+				89052391201262010036BD37 /* ParticlesGold.scnp in Resources */,
 				89BE3D081FFEA9B1009F8636 /* LaunchScreen.storyboard in Resources */,
 				8996F6D720111B2F0075986F /* spark.png in Resources */,
 				8996F6D820111B2F0075986F /* ParticlesPink.scnp in Resources */,
+				8905238F201260390036BD37 /* ParticlesBlack.scnp in Resources */,
 				89BE3D051FFEA9B1009F8636 /* Assets.xcassets in Resources */,
 				89BE3D031FFEA9B1009F8636 /* Main.storyboard in Resources */,
+				89052393201263B50036BD37 /* ParticlesBlackRed.scnp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

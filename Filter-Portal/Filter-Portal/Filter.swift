@@ -18,6 +18,14 @@ struct FilterIdentification {
         3: "CIColorPosterize",
         4: "CIColorInvert"
     ]
+    
+    let frameName: Dictionary<Int, String> = [
+        0: "ParticlesBlack.scnp",
+        1: "ParticlesPink.scnp",
+        2: "ParticlesGold.scnp",
+        3: "ParticlesBlackRed.scnp",
+        4: "ParticlesWhite.scnp"
+    ]
 }
 
 struct Filter {
