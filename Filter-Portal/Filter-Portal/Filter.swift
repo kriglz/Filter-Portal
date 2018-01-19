@@ -13,7 +13,7 @@ struct FilterIdentification {
     
     let name: Dictionary<Int, String> = [
         0: "CIPhotoEffectNoir",
-        1: "CILineOverlay",
+        1: "CIColorClamp",
         2: "CIEdges",
         3: "CIColorPosterize",
         4: "CIColorInvert"
@@ -33,150 +33,78 @@ struct Filter {
     /// Applies selected filters to the portal / scene.
     func apply(to frameImage: CIImage, withMaskOf cropShape: UIBezierPath?, using filterIndex: Int, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> CIImage {
         
-        var filteredImage = CIImage()
-        
         let filterName = FilterIdentification().name[filterIndex]
         
+        
+        
         if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
-            
-            var shouldBeScaled: Bool = false
-            var scaleFactor: CGFloat = 0.0
-            
+
             // Adds additional conditions for some filters.
-            switch filterName {
-            case "CILineOverlay":
-                ciFilter.setValue(1.0, forKey: kCIInputContrastKey)
-                ciFilter.setValue(0.2, forKey: "inputThreshold")
-                ciFilter.setValue(1, forKey: "inputEdgeIntensity")
-                ciFilter.setValue(0.6, forKey: "inputNRSharpness")
-                ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
-                shouldBeScaled = true
-                scaleFactor = 4.0
-            default:
-                shouldBeScaled = false
-                break
+            if filterName == "CIColorClamp" {
+                ciFilter.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
+                ciFilter.setValue(CIVector.init(x: 1, y: 0.4, z: 1, w: 1), forKeyPath: "inputMaxComponents")
             }
             
+            //                CILineOverlay filter properties:
+            //                ciFilter.setValue(1.0, forKey: kCIInputContrastKey)
+            //                ciFilter.setValue(0.2, forKey: "inputThreshold")
+            //                ciFilter.setValue(1, forKey: "inputEdgeIntensity")
+            //                ciFilter.setValue(0.6, forKey: "inputNRSharpness")
+            //                ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
+          
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
             if isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
                 
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage)
-                
+
                 // If camera is in non filtered side - looking to portal from outside.
                 if !isInFilteredSide {
-                    var tempScaledImage = CIImage()
                     
-                    if shouldBeScaled {
-                        tempScaledImage = scale(image: croppedImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
-                                var croppedWithBackgroundImage = result.composited(over: background)
-                                croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
-                                filteredImage = croppedWithBackgroundImage.composited(over: frameImage)
-                            } else {
-                                tempScaledImage = scale(image: result, by: scaleFactor)
-                                filteredImage = tempScaledImage.composited(over: frameImage)
-                            }
-                        }
-                    } else {
-                        ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
-                        if let result = ciFilter.outputImage {
-                            filteredImage = result.composited(over: frameImage)
-                        }
+                    ciFilter.setValue(croppedImage, forKey: kCIInputImageKey)
+                    if let result = ciFilter.outputImage {
+                        return result.composited(over: frameImage)
                     }
-                   
+                    
                 // If camera is in filtered side, inside portal.
                 } else {
-                    if shouldBeScaled {
-                        let tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            if let background = backgroundImage(for: frameImage, using: filterIndex) {
-                                var backgroundedImage = result.composited(over: background)
-                                backgroundedImage = scale(image: backgroundedImage, by: scaleFactor)
-                                filteredImage = croppedImage.composited(over: backgroundedImage)
-                            } else {
-                                let tempScaledImage = scale(image: result, by: scaleFactor)
-                                filteredImage = tempScaledImage.composited(over: frameImage)
-                            }
-                        }
-                    } else {
-                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                        if let result = ciFilter.outputImage {
-                            filteredImage = croppedImage.composited(over: result)
-                        }
+                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    if let result = ciFilter.outputImage {
+                        return croppedImage.composited(over: result)
                     }
                 }
                 
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
             } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
                 
-                if isInFilteredSide {
-                    filteredImage = frameImage
-                   
-                } else {
-                    if shouldBeScaled {
-                        var tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
-                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
-                                tempScaledImage = result.composited(over: background)
-                            } else {
-                                tempScaledImage = result
-                            }
-                            
-                            filteredImage = scale(image: tempScaledImage, by: scaleFactor)
-                        }
-                    } else {
-                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            filteredImage = result
-                        }
+                if !isInFilteredSide {
+                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    if let result = ciFilter.outputImage {
+                        return result
                     }
+                } else {
+                    return frameImage
                 }
+                
             } else {
                 
                 if !isInFilteredSide {
-                     filteredImage = frameImage
-                  
+                   return frameImage
                 } else {
-                    if shouldBeScaled {
-                        var tempScaledImage = scale(image: frameImage, by: 1/scaleFactor)
-                        
-                        ciFilter.setValue(tempScaledImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            
-                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
-                                tempScaledImage = result.composited(over: background)
-                            } else {
-                                tempScaledImage = result
-                            }
-                            filteredImage = scale(image: tempScaledImage, by: scaleFactor)
-                          
-                        }
-                    } else {
-                        ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
-                        
-                        if let result = ciFilter.outputImage {
-                            filteredImage = result
-                        }
+                    ciFilter.setValue(frameImage, forKey: kCIInputImageKey)
+                    if let result = ciFilter.outputImage {
+                        return result
                     }
                 }
             }
         }
         
-        return filteredImage
+        return frameImage
     }
     
     let context = CIContext()
+
     
     /// Cropps image using custom shape.
     private func applyMask(of BezierPath: UIBezierPath, for image: CIImage) -> CIImage {
@@ -201,30 +129,5 @@ struct Filter {
         context.clearCaches()
         
         return CIImage.init(image: maskedImage)!
-    }
-    
-    private func backgroundImage(for croppedImage: CIImage, using filterIndex: Int) -> CIImage? {
-        guard filterIndex == 1 else { return nil }
-        
-        // Adding color background for filters which make cropped image transparent.
-        if let ciColorFilter = CIFilter(name: "CIColorClamp"){
-            ciColorFilter.setValue(croppedImage, forKeyPath: kCIInputImageKey)
-            ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 0), forKeyPath: "inputMinComponents")
-            ciColorFilter.setValue(CIVector.init(x: 1, y: 0, z: 1, w: 1), forKeyPath: "inputMaxComponents")
-
-            if let backgroundImageResult = ciColorFilter.outputImage {
-                return backgroundImageResult
-            }
-        }
-        
-        return nil
-    }
-    
-    private func scale(image: CIImage, by factor: CGFloat) -> CIImage {
-        let scaleFilter = CIFilter(name: "CIAffineTransform")!
-        scaleFilter.setValue(image, forKey: kCIInputImageKey)
-        scaleFilter.setValue(CGAffineTransform.init(scaleX: factor, y: factor), forKey: "inputTransform")
-        let scaledImage = scaleFilter.outputImage!
-        return scaledImage
     }
 }
