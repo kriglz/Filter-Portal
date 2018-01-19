@@ -46,12 +46,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func resetScene(_ sender: UIButton) {
         
-        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
-            portal.removeFromParentNode()
-            print("\nremoved")
-        }
+//        if let portal = sceneView.scene.rootNode.childNode(withName: "portal", recursively: true) {
+//            portal.removeFromParentNode()
+//        }
         
-//        portal?.removeFromParentNode()
+        if let portal = portal {
+            portal.removeFromParentNode()
+        }
+        portal = nil
+
         isInFilteredSide = false
         didEnterPortal = false
         shouldDisableButtons(true)
@@ -240,7 +243,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 
             } else {
                 isPortalFrameBiggerThanCameras = false
-                
             }
             
             (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
@@ -375,6 +377,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if let portal = portal {
             portal.removeFromParentNode()
         }
+        portal = nil
         portal = PortalNode.setup(with: portalSize)
         guard let portal = portal else { return }
         portal.addFrame(of: "ParticlesPink.scnp", for: portalSize)
