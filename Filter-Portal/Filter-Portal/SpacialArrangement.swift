@@ -10,8 +10,48 @@ import ARKit
 
 struct SpacialArrangement {
     
-    
+    /// Evaluates relative size of portal to visible scene.
+    func compare(_ cropShape: UIBezierPath, with sceneFrame: CGRect) -> Bool {
+        let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
+        let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
+        let sceneFrameLeftBottompPoint = CGPoint(x: sceneFrame.origin.x, y: sceneFrame.size.height)
+        
+        if cropShape.contains(sceneFrame.origin) && cropShape.contains(sceneFrameRightTopPoint)
+            && cropShape.contains(sceneFrameRightBottomPoint) && cropShape.contains(sceneFrameLeftBottompPoint){
+            return true
+        }
+        return false
+    }
 
+    /// Decides if point of view is in filtered side or non filtered side.
+    func inFilteredSide(_ portal: SCNNode, relativeTo cameraPoint: SCNNode, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> (Bool, Bool) {
+        
+        var didEnter: Bool = true
+        
+        guard !didEnterPortal else {
+            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
+                didEnter = false
+            }
+            return (isInFilteredSide, didEnter)
+        }
+        
+        if !isInFilteredSide {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                didEnter = true
+                return (true, false)
+            } else {
+                return (false, false)
+            }
+            
+        } else {
+            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                return (false, false)
+            } else {
+                return (true, false)
+            }
+        }
+    }
+    
     /// Returns portal projection `UIBezierPath` in camera captured image - crop shape. 
     func evaluateCropShape(for portal: SCNNode, in cameraFrame: ARCamera, with imageSize: CGSize, at rootNode: SCNNode) -> UIBezierPath {
         

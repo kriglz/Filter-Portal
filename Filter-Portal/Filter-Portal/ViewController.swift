@@ -65,10 +65,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let spacialArrangement = SpacialArrangement()
     
-    private var isPortalFrameBiggerThanCameras = false
-    private var isInFilteredSide = false
-    private var isPortalVisible = true
-    private var didEnterPortal = false
+
 
 
     override func viewDidLoad() {
@@ -199,34 +196,65 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: session.currentFrame!, trackingState: camera.trackingState)
     }
     
+    private var isPortalFrameBiggerThanCameras = false
+    private var isInFilteredSide = false
+    private var isPortalVisible = true
+    private var didEnterPortal = false
+    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
         
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
-            let cropShape = spacialArrangement.evaluateCropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
-            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex)
+            
+            // Calculates if portal node is in camera's frustum.
+            guard let camera = sceneView.pointOfView else { return }
+            
+            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
+
+            var cropShape: UIBezierPath?
+            
+            if isPortalVisible {
+                cropShape = spacialArrangement.evaluateCropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
+                guard let cropShape = cropShape else { return }
+                isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
+                
+            } else {
+                isPortalFrameBiggerThanCameras = false
+                
+            }
+            
+            (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+            
+            
+            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+            
             let cgImage = convert(filteredCIImage)
             sceneView.scene.background.contents = cgImage
+            
+            
+            if shouldSavePhoto {
+                presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
+            }
+            
         } else {
             let cgImage = convert(frameImage)
             sceneView.scene.background.contents = cgImage
         }
+    
         
         //
         // ADD ERROR MESSAGE WITH NOT BEING ABLE TO RENDER CONTENT
         //
         
-        if shouldSavePhoto {
-            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
-        }
+
     }
     
-//    private let context = CIContext()
+    private let context = CIContext()
 
     private func convert(_ ciImage: CIImage) -> CGImage? {
-        let frameCGImage = CIContext().createCGImage(ciImage, from: ciImage.extent)
-        CIContext().clearCaches()
+        let frameCGImage = context.createCGImage(ciImage, from: ciImage.extent)
+        context.clearCaches()
         return frameCGImage
     }
     
@@ -251,34 +279,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
         }
     }
-    
-    /// Decides if point of view is in filtered side or non filtered side.
-    private func getTheSide(of cameraPoint: SCNNode, relativeTo portal: SCNNode) -> Bool {
-        guard !didEnterPortal else {
-            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
-                didEnterPortal = false
-            }
-            return isInFilteredSide
-        }
-        
-        if !isInFilteredSide {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                didEnterPortal = true
-                return true
-            } else {
-                return false
-            }
-            
-        } else {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                didEnterPortal = true
-                return false
-            } else {
-                return true
-            }
-        }
-    }
-    
+ 
     private func shouldDisableButtons(_ yes: Bool) {
         if yes {
             resetButton.isEnabled = false
@@ -295,96 +296,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    private func compare(_ mask: UIBezierPath, with sceneFrame: CGRect) -> Bool {
-        let sceneFrameRightTopPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.origin.y)
-        let sceneFrameRightBottomPoint = CGPoint(x: sceneFrame.size.width, y: sceneFrame.size.height)
-        let sceneFrameLeftBottompPoint = CGPoint(x: sceneFrame.origin.x, y: sceneFrame.size.height)
-        
-        if mask.contains(sceneFrame.origin) && mask.contains(sceneFrameRightTopPoint)
-            && mask.contains(sceneFrameRightBottomPoint) && mask.contains(sceneFrameLeftBottompPoint){
-            return true
-        }
-        return false
-    }
-    
-    
-//    /// Converts and then projects node points into camera captured image plane.
-//    private func getProjection(of nodes: SCNNode, _ vector: SCNVector3, in imageSize: CGSize, in imageCameraFrame: ARCamera) -> CGPoint {
-//        let convertedVector = sceneView.scene.rootNode.convertPosition(vector, from: nodes)
-//        let convertedToFloatVector = vector_float3.init(convertedVector)
-//        let projection = imageCameraFrame.projectPoint(convertedToFloatVector, orientation: .portrait, viewportSize: imageSize)
-//        return projection
-//    }
-//
-//    /// Returns portal projection `UIBezierPath` in camera captured image.
-//    private func currentPositionInCameraFrame(of portal: SCNNode, in imageCameraFrame: ARCamera, with imageSize: CGSize) -> UIBezierPath {
-//
-//        // Composing too left and bottom right corners for the plane from given bounding box instance.
-//        let minLeftPoint = SCNVector3.init(portal.boundingBox.min.x, portal.boundingBox.max.y, 0)
-//        let maxRightPoint = SCNVector3.init(portal.boundingBox.max.x, portal.boundingBox.min.y, 0)
-//
-//        // Portal corner point projections to the camera captured image.
-//        let projectionMinLeft = getProjection(of: portal, minLeftPoint, in: imageSize, in: imageCameraFrame)
-//        let projectionMaxRight = getProjection(of: portal, maxRightPoint, in: imageSize, in: imageCameraFrame)
-//        let projectionMin = getProjection(of: portal, portal.boundingBox.min, in: imageSize, in: imageCameraFrame)
-//        let projectionMax = getProjection(of: portal, portal.boundingBox.max, in: imageSize, in: imageCameraFrame)
-//
-//        /// Defines cropping shape, based on portal projection to the camera captured image.
-//        let croppingShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
-//
-//        return croppingShape
-//    }
-    
-    
-    
-    
-//    /// Creates custom closed `UIBezierPath` for 4 points in selected size.
-//    private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
-//        let path = UIBezierPath()
-////
-////        /// Mid point of AB line.
-////        let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-////                              y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-////        /// Mid point of BC line.
-////        var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-////                              y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
-////
-////        if pointBC.y < -200 {
-////            pointBC.y = -200
-////        }
-////
-////        /// Mid point of CD line.
-////        let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-////                              y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-////        /// Mid point of DA line.
-////        var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-////                              y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
-////
-////        if pointDA.y < -200 {
-////            pointDA.y = -200
-////        }
-////
-////        path.move(to: pointAB)
-////        path.addQuadCurve(to: pointBC, controlPoint: pointB)
-////        path.addQuadCurve(to: pointCD, controlPoint: pointC)
-////        path.addQuadCurve(to: pointDA, controlPoint: pointD)
-////        path.addQuadCurve(to: pointAB, controlPoint: pointA)
-//
-//        
-//        path.move(to: pointA)
-//        path.addLine(to: pointB)
-//        path.addLine(to: pointC)
-//        path.addLine(to: pointD)
-//        
-//        
-//        
-//        path.close()
-//        
-//        return path
-//    }
-    
-    
-    
+
+  
     
     // MARK: - ARSessionObserver
     

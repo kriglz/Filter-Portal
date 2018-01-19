@@ -11,20 +11,21 @@ import ARKit
 
 struct FilterIdentification {
     let name: Dictionary<Int, String> = [
-        1: "CIPhotoEffectNoir",
-        2: "CILineOverlay",
-        3: "CIEdges",
-        4: "CIColorPosterize",
-        5: "CIColorInvert"
+        0: "CIPhotoEffectNoir",
+        1: "CILineOverlay",
+        2: "CIEdges",
+        3: "CIColorPosterize",
+        4: "CIColorInvert"
     ]
 }
 
 struct Filter {
     
     /// Applies selected filters to the portal / scene.
-    func apply(to frameImage: CIImage, withMaskOf cropShape: UIBezierPath, using filterIndex: Int) -> CIImage {
-        var filteredImage = CIImage.init()
-
+    func apply(to frameImage: CIImage, withMaskOf cropShape: UIBezierPath?, using filterIndex: Int, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> CIImage {
+        
+        var filteredImage = CIImage()
+        
         let filterName = FilterIdentification().name[filterIndex]
         
         if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
@@ -47,20 +48,12 @@ struct Filter {
                 break
             }
             
-            // Calculates if portal node is in camera's frustum.
-            guard let cameraView = sceneView.pointOfView else { return }
-            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: cameraView)
-            
-            // Defines relative size of portal to visible scene.
-            isPortalFrameBiggerThanCameras = compare(cropShape, with: frameImage.extent)
-            // Defines point of view standing position.
-            isInFilteredSide = getTheSide(of: cameraView, relativeTo: portal)
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
-            if isPortalVisible && !isPortalFrameBiggerThanCameras {
+            if isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
                 
                 // Gets cropped image.
-                let croppedImage = applyMask(of: cropShape, for: frameImage, in: frameImage.extent.size)
+                let croppedImage = applyMask(of: cropShape, for: frameImage)
                 
                 // If camera is in non filtered side - looking to portal from outside.
                 if !isInFilteredSide {
@@ -74,7 +67,7 @@ struct Filter {
                     }
                     
                     if let result = ciFilter.outputImage {
-                        if let background = backgroundImage(for: tempScaledImage) {
+                        if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             // This filter image needs to be scaled down always.
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
@@ -100,7 +93,7 @@ struct Filter {
                     }
                     
                     if let result = ciFilter.outputImage {
-                        if let background = backgroundImage(for: frameImage) {
+                        if let background = backgroundImage(for: frameImage, using: filterIndex) {
                             var croppedWithBackgroundImage = result.composited(over: background)
                             croppedWithBackgroundImage = scale(image: croppedWithBackgroundImage, by: scaleFactor)
                             filteredImage = croppedImage.composited(over: croppedWithBackgroundImage)
@@ -130,7 +123,7 @@ struct Filter {
                         
                         if let result = ciFilter.outputImage {
                             
-                            if let background = backgroundImage(for: tempScaledImage) {
+                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
                                 tempScaledImage = result.composited(over: background)
                             } else {
                                 tempScaledImage = result
@@ -159,7 +152,7 @@ struct Filter {
                         
                         if let result = ciFilter.outputImage {
                             
-                            if let background = backgroundImage(for: tempScaledImage) {
+                            if let background = backgroundImage(for: tempScaledImage, using: filterIndex) {
                                 tempScaledImage = result.composited(over: background)
                             } else {
                                 tempScaledImage = result
@@ -181,19 +174,22 @@ struct Filter {
         return filteredImage
     }
     
+    let context = CIContext()
+    
     /// Cropps image using custom shape.
-    private func applyMask(of BezierPath: UIBezierPath, for image: CIImage, in imageSize: CGSize) -> CIImage {
+    private func applyMask(of BezierPath: UIBezierPath, for image: CIImage) -> CIImage {
         // Define graphic context (canvas) to paint on
-        UIGraphicsBeginImageContext(imageSize)
+        UIGraphicsBeginImageContext(image.extent.size)
         let currentGraphicsContext = UIGraphicsGetCurrentContext()!
         currentGraphicsContext.saveGState()
         
         // Flips image upside down to match `UIGraphicsGetCurrentContext`.
         let transformedImage = image.transformed(by: CGAffineTransform.init(scaleX: 1, y: -1)).transformed(by: CGAffineTransform.init(translationX: 0, y: image.extent.size.height))
         
+        
         // Set the clipping mask
         BezierPath.addClip()
-        let cgImage = CIContext().createCGImage(transformedImage, from: image.extent)!
+        let cgImage = context.createCGImage(transformedImage, from: image.extent)!
         currentGraphicsContext.draw(cgImage, in: image.extent)
         let maskedImage = UIGraphicsGetImageFromCurrentImageContext()!
         
@@ -201,13 +197,13 @@ struct Filter {
         currentGraphicsContext.restoreGState()
         UIGraphicsEndImageContext()
         
-        CIContext().clearCaches()
+        context.clearCaches()
         
         return CIImage.init(image: maskedImage)!
     }
     
     
-    private func backgroundImage(for croppedImage: CIImage) -> CIImage? {
+    private func backgroundImage(for croppedImage: CIImage, using filterIndex: Int) -> CIImage? {
         guard filterIndex == 1 else { return nil }
         
         // Adding color background for filters which make cropped image transparent.
