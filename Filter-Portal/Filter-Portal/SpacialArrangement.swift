@@ -29,7 +29,7 @@ struct SpacialArrangement {
         var didEnter: Bool = true
         
         guard !didEnterPortal else {
-            if isPortalVisible && abs(cameraPoint.position.z - portal.position.z) > 0.2 {
+            if abs(cameraPoint.position.z - portal.position.z) > 0.2 { 
                 didEnter = false
             }
             return (isInFilteredSide, didEnter)
@@ -37,15 +37,14 @@ struct SpacialArrangement {
         
         if !isInFilteredSide {
             if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                didEnter = true
-                return (true, false)
+                return (true, true)
             } else {
                 return (false, false)
             }
             
         } else {
             if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                return (false, false)
+                return (false, true)
             } else {
                 return (true, false)
             }

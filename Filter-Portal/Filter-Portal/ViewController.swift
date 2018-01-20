@@ -339,6 +339,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             print("\n ERROR - background is nil \n")
             return
         }
+//        
+//        if isRecording && !recorder.isRecording {
+//            shouldSavePhoto = true
+//            isRecording = false
+//        }
         
         if shouldSavePhoto {
             let image = sceneView.snapshot()
@@ -462,7 +467,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         let hits = sceneView.hitTest(point, types: .existingPlane)
         
         guard let firstHit = hits.first else { return nil }
-        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y + Float(portalSize.height * 1.2), firstHit.worldTransform.columns.3.z)
+        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y + Float(portalSize.height * 1.5), firstHit.worldTransform.columns.3.z)
         
         return hitPosition
     }
