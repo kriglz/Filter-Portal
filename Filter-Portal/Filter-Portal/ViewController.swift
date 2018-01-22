@@ -313,9 +313,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
                 guard let cropShape = cropShape else { return }
                 isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
                 
-            } else {
-                isPortalFrameBiggerThanCameras = false
             }
+//            else {
+//                isPortalFrameBiggerThanCameras = false
+//            }
             
             (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
             

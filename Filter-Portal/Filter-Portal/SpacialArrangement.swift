@@ -26,28 +26,28 @@ struct SpacialArrangement {
     /// Decides if point of view is in filtered side or non filtered side.
     func inFilteredSide(_ portal: SCNNode, relativeTo cameraPoint: SCNNode, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> (Bool, Bool) {
         
-        var didEnter: Bool = true
+//        var didEnter: Bool = true
         
         guard !didEnterPortal else {
             if abs(cameraPoint.position.z - portal.position.z) > 0.2 {
-                return (!isInFilteredSide, false)
-//                didEnter = false
+                return (isInFilteredSide, false)
+                //didEnter = false
             }
-            return (isInFilteredSide, didEnter)
+            return (isInFilteredSide, true)
         }
         
         if !isInFilteredSide {
             if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                return (true, true)
+                return (!isInFilteredSide, true)
             } else {
-                return (false, false)
+                return (isInFilteredSide, false)
             }
             
         } else {
             if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                return (false, true)
+                return (!isInFilteredSide, true)
             } else {
-                return (true, false)
+                return (isInFilteredSide, false)
             }
         }
     }

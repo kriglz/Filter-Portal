@@ -52,8 +52,8 @@ struct Filter {
           
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
-            if isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
-                
+            if !didEnterPortal && isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
+                                
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage)
 
@@ -70,7 +70,6 @@ struct Filter {
                 
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
             } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
-                
                 if !isInFilteredSide {
                     return filtered(frameImage, with: ciFilter)
                 } else {
@@ -78,7 +77,6 @@ struct Filter {
                 }
                 
             } else {
-                
                 if !isInFilteredSide {
                    return frameImage
                 } else {
