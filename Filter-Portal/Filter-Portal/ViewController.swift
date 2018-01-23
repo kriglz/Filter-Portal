@@ -186,8 +186,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
         
-        planeButton.isEnabled = false
-        planeButton.alpha = 0.7
+        planeButton.isHidden = true
+//        planeButton.alpha = 0.7
         tapRecognizer.isEnabled = false
 
         // Adds pinch gesture to scale the node.
@@ -273,7 +273,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         showARPlanes(nil)
     }
 
+    private func showIntroductionAlert() {
+        wasIntroduced = true
+        let alert = UIAlertController(title: "Good job!", message: "Now tap the screen or the PLUS button to place the portal and have fun!", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+
+        self.present(alert, animated: true, completion: nil)
+    }
     
+    private var wasIntroduced = false
     
     // MARK: - ARSessionDelegate
     
@@ -281,8 +289,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         guard let frame = session.currentFrame else { return }
         updateSessionInfoLabel(for: frame, trackingState: frame.camera.trackingState)
         
-        planeButton.isEnabled = true
-        planeButton.alpha = 0.7
+        if !wasIntroduced {
+            showIntroductionAlert()
+        }
+    
+        planeButton.isHidden = false
+//        planeButton.alpha = 0.7
         tapRecognizer.isEnabled = true
     }
     
@@ -394,14 +406,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         switch trackingState {
         case .normal where frame.anchors.isEmpty:
             // No planes detected; provide instructions for this app's AR interactions.
-            message = "Move the device around to detect horizontal surfaces."
+            message = "Move the device around to detect horizontal surfaces 🤓"
             
         case .normal:
             // No feedback needed when tracking is normal and planes are visible.
             message = ""
             
         case .notAvailable:
-            message = "Tracking unavailable."
+            message = "Sorry, tracking unavailable ☹️"
             
         case .limited(.excessiveMotion):
             message = "Tracking limited - Move the device more slowly."
@@ -410,7 +422,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             message = "Tracking limited - Point the device at an area with visible surface detail, or improve lighting conditions."
             
         case .limited(.initializing):
-            message = "Initializing AR session."
+            message = "Initializing... 🙄"
         }
         
         sessionInfoLabel.text = message
@@ -496,16 +508,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     private func shouldDisableButtons(_ yes: Bool) {
         if yes {
-            resetButton.isEnabled = false
-            resetButton.alpha = 0.7
-            filterButton.isEnabled = false
-            filterButton.alpha = 0.7
+            resetButton.isHidden = true
+//            resetButton.alpha = 0.7
+            filterButton.isHidden = true
+//            filterButton.alpha = 0.7
             photoCaptureButotn.isHidden = true
         } else {
-            resetButton.isEnabled = true
-            resetButton.alpha = 1
-            filterButton.isEnabled = true
-            filterButton.alpha = 1
+            resetButton.isHidden = false
+//            resetButton.alpha = 1
+            filterButton.isHidden = false
+//            filterButton.alpha = 1
             photoCaptureButotn.isHidden = false
         }
     }
