@@ -48,12 +48,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     private var isPortalVisible = true
     private var didEnterPortal = false
     
-    let recorder = RPScreenRecorder.shared()
+//    let recorder = RPScreenRecorder.shared()
     private var isRecording = false
     
     // - Actions
     
     @IBAction func resetScene(_ sender: UIButton) {
+        resetScene()
+    }
+    
+    private func resetScene() {
         if let portalNode = portal {
             portalNode.removeFromParentNode()
             portal = nil
@@ -83,21 +87,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     @IBAction func takeAPhoto(_ sender: UIButton) {
 //        shouldSavePhoto = true
-        
+
         if !isRecording {
             startRecording()
+            print("startRecording")
         } else {
             stopRecording()
+            print("stopRecording")
         }
     }
     
     private func startRecording() {
+        let recorder = RPScreenRecorder.shared()
+        
         guard recorder.isAvailable else {
             print("Recording is not available at this time.")
             return
         }
         
-        recorder.startRecording{ [weak self] (error) in
+        recorder.startRecording { [weak self] error in
             guard error == nil else {
                 print("There was an error starting the recording.")
                 return
@@ -105,12 +113,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             
             print("Started Recording Successfully")
             self?.isRecording = true
+            
+            DispatchQueue.main.async {
+                self?.photoCaptureButotn.setImage(UIImage.init(named: "takephotoRecording"), for: .normal)
+            }
         }
-        
-        photoCaptureButotn.setImage(UIImage.init(named: "takephotoRecording"), for: .normal)   
     }
   
     private func stopRecording() {
+        let recorder = RPScreenRecorder.shared()
+
         recorder.stopRecording { [weak self] (preview, error) in
             print("Stopped recording")
             
@@ -122,7 +134,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             let alert = UIAlertController(title: "Recording Finished", message: "Would you like to edit or delete your recording?", preferredStyle: .alert)
             
             let deleteAction = UIAlertAction(title: "Delete", style: .destructive, handler: { (action: UIAlertAction) in
-                self?.recorder.discardRecording(handler: { () -> Void in
+                recorder.discardRecording(handler: { () -> Void in
                     print("Recording suffessfully deleted.")
                 })
             })
@@ -137,10 +149,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             self?.present(alert, animated: true, completion: nil)
             
             self?.isRecording = false
-//            self?.viewReset()
+            
+            DispatchQueue.main.async {
+                self?.photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
+            }
         }
-        photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
-
     }
 
     func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
@@ -187,13 +200,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         self.view.addGestureRecognizer(tapRecognizer)
         
         planeButton.isHidden = true
-//        planeButton.alpha = 0.7
+        photoCaptureButotn.isHidden = true
+
         tapRecognizer.isEnabled = false
 
         // Adds pinch gesture to scale the node.
         let pinchHandler = #selector(handlePinchGesture(recognizer:))
         let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
         self.view.addGestureRecognizer(pinchRecognizer)
+        
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationWillResignActive, object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -214,6 +231,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         }
     }
     
+    @objc func appMovedToBackground() {
+        if isRecording {
+            stopRecording()
+        }
+        resetScene()
+    }
     
     /// - Tag: UpdateARContent
     
@@ -294,7 +317,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         }
     
         planeButton.isHidden = false
-//        planeButton.alpha = 0.7
+        photoCaptureButotn.isHidden = false
         tapRecognizer.isEnabled = true
     }
     
@@ -407,6 +430,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         case .normal where frame.anchors.isEmpty:
             // No planes detected; provide instructions for this app's AR interactions.
             message = "Move the device around to detect horizontal surfaces 🤓"
+            resetScene()
             
         case .normal:
             // No feedback needed when tracking is normal and planes are visible.
@@ -423,6 +447,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             
         case .limited(.initializing):
             message = "Initializing... 🙄"
+            resetScene()
         }
         
         sessionInfoLabel.text = message
@@ -509,16 +534,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     private func shouldDisableButtons(_ yes: Bool) {
         if yes {
             resetButton.isHidden = true
-//            resetButton.alpha = 0.7
             filterButton.isHidden = true
-//            filterButton.alpha = 0.7
-            photoCaptureButotn.isHidden = true
+//            photoCaptureButotn.isHidden = true
         } else {
             resetButton.isHidden = false
-//            resetButton.alpha = 1
             filterButton.isHidden = false
-//            filterButton.alpha = 1
-            photoCaptureButotn.isHidden = false
+//            photoCaptureButotn.isHidden = false
         }
     }
     
