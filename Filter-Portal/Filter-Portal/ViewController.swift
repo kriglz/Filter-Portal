@@ -11,7 +11,7 @@ import SceneKit
 import ARKit
 import ReplayKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RPPreviewViewControllerDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RPPreviewViewControllerDelegate, RPScreenRecorderDelegate {
     
     @IBOutlet weak var sceneView: ARSCNView!
     
@@ -48,7 +48,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     private var isPortalVisible = true
     private var didEnterPortal = false
     
-//    let recorder = RPScreenRecorder.shared()
     private var isRecording = false
     
     // - Actions
@@ -90,44 +89,95 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
 
         if !isRecording {
             startRecording()
-            print("startRecording")
         } else {
             stopRecording()
-            print("stopRecording")
         }
     }
     
     private func startRecording() {
         let recorder = RPScreenRecorder.shared()
+        recorder.delegate = self
+        
+        if recorder.isRecording {
+            stopRecording()
+        }
         
         guard recorder.isAvailable else {
-            print("Recording is not available at this time.")
+            let alert = UIAlertController(title: "Oh noes!", message: "Screen recording is unavailable. Possible reasons: your device does not support it; you are displaying information over Airplay or through a TVOut session; another app is using the recorder right now. Please update your settings.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+
             return
         }
         
         recorder.startRecording { [weak self] error in
-            guard error == nil else {
-                print("There was an error starting the recording.")
-                return
-            }
-            
-            print("Started Recording Successfully")
-            self?.isRecording = true
-            
-            DispatchQueue.main.async {
-                self?.photoCaptureButotn.setImage(UIImage.init(named: "takephotoRecording"), for: .normal)
+            if let error = error as NSError? {
+                switch error.code {
+                case RPRecordingErrorCode.userDeclined.rawValue:
+                    self?.showAlert(with: "Video recording is impossible without screen recording.")
+                default:
+                    self?.showAlert(with: error.localizedDescription)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    if recorder.isRecording {
+                        self?.isRecording = true
+                        self?.photoCaptureButotn.setImage(UIImage.init(named: "takephotoRecording"), for: .normal)
+                    }
+                }
             }
         }
     }
-  
+    
+    private func showAlert(with message: String) {
+        let alert = UIAlertController(title: "Oh noes!", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+
+    func screenRecorder(_ screenRecorder: RPScreenRecorder, didStopRecordingWith previewViewController: RPPreviewViewController?, error: Error?) {
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.isRecording = false
+            self?.photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
+        }
+        
+        // Display the error the user to alert them that the recording failed.
+        if let error = error as NSError? {
+            switch error.code {
+            case RPRecordingErrorCode.userDeclined.rawValue:
+                let message = "Video recording is impossible without screen recording."
+                showAlert(with: message)
+            case RPRecordingErrorCode.failedMediaServicesFailure.rawValue:
+                let message = "Highly recommend to restart your phone to be able to record the screen. Error: \(error.localizedDescription)"
+                showAlert(with: message)
+            default:
+                let message = "Highly recommend to restart your app to be able to record the screen. Error: \(error.localizedDescription)"
+                showAlert(with: message)
+            }
+        }
+    }
+    
     private func stopRecording() {
         let recorder = RPScreenRecorder.shared()
+        
+        // Do nothing if screen recording is not available
+        guard recorder.isAvailable else {
+            return
+        }
+        
+        photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
+        isRecording = false
 
         recorder.stopRecording { [weak self] (preview, error) in
-            print("Stopped recording")
+            
+            if let error = error as NSError? {
+                self?.showAlert(with: error.localizedDescription)
+                return
+            }
             
             guard preview != nil else {
-                print("Preview controller is not available.")
+                self?.showAlert(with: "Recorded video is not available.")
                 return
             }
             
@@ -147,12 +197,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             alert.addAction(editAction)
             alert.addAction(deleteAction)
             self?.present(alert, animated: true, completion: nil)
-            
-            self?.isRecording = false
-            
-            DispatchQueue.main.async {
-                self?.photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
-            }
         }
     }
 
@@ -201,7 +245,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         
         planeButton.isHidden = true
         photoCaptureButotn.isHidden = true
-
         tapRecognizer.isEnabled = false
 
         // Adds pinch gesture to scale the node.
@@ -210,12 +253,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         self.view.addGestureRecognizer(pinchRecognizer)
         
         let notificationCenter = NotificationCenter.default
-        notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationWillResignActive, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-   
+           
         if portal != nil {
             shouldDisableButtons(false)
         } else {
@@ -231,11 +275,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         }
     }
     
+    @objc func appResignsActive() {
+        if isRecording {
+            stopRecording()
+        }
+    }
+    
     @objc func appMovedToBackground() {
         if isRecording {
             stopRecording()
         }
         resetScene()
+        
+        planeButton.isHidden = true
+        photoCaptureButotn.isHidden = true
+        tapRecognizer.isEnabled = false
     }
     
     /// - Tag: UpdateARContent
@@ -333,6 +387,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
         
+//        if RPScreenRecorder.shared().isRecording {
+//            print(RPScreenRecorder.shared().isAvailable)
+//            print(RPScreenRecorder.shared().isRecording, "\n")
+//
+//        } else {
+//            stopRecording()
+//        }
+       
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
             
@@ -349,9 +411,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
                 isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
                 
             }
-//            else {
-//                isPortalFrameBiggerThanCameras = false
-//            }
             
             (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
             
@@ -375,11 +434,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             print("\n ERROR - background is nil \n")
             return
         }
-//        
-//        if isRecording && !recorder.isRecording {
-//            shouldSavePhoto = true
-//            isRecording = false
-//        }
         
         if shouldSavePhoto {
             let image = sceneView.snapshot()
