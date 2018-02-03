@@ -27,8 +27,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     @IBOutlet weak var planeButton: UIButton!
     
-    private var shouldSavePhoto: Bool = false
-    
     private var tapRecognizer = UITapGestureRecognizer()
  
     private let portalSize: CGSize = CGSize(width: 0.5, height: 0.9)
@@ -50,6 +48,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     private var isRecording = false
     
+    private var wasIntroduced = false
+
     // - Actions
     
     @IBAction func resetScene(_ sender: UIButton) {
@@ -67,13 +67,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     }
     
     @IBAction func changeFilter(_ sender: UIButton) {
-        if filterIndex < FilterIdentification().name.count - 1 {
-            filterIndex += 1
-        } else {
-            filterIndex = 0
+        if let portal = portal {
+            if filterIndex < FilterIdentification().name.count - 1 {
+                filterIndex += 1
+            } else {
+                filterIndex = 0
+            }
+            portal.addFrame(of: filterIndex, for: portalSize)
         }
-        
-        portal?.addFrame(of: filterIndex, for: portalSize)
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
@@ -85,8 +86,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     }
     
     @IBAction func takeAPhoto(_ sender: UIButton) {
-//        shouldSavePhoto = true
-
         if !isRecording {
             startRecording()
         } else {
@@ -209,18 +208,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        guard ARWorldTrackingConfiguration.isSupported else {
-            fatalError("""
-                ARKit is not available on this device. For apps that require ARKit
-                for core functionality, use the `arkit` key in the key in the
-                `UIRequiredDeviceCapabilities` section of the Info.plist to prevent
-                the app from installing. (If the app can't be installed, this error
-                can't be triggered in a production scenario.)
-                In apps where AR is an additive feature, use `isSupported` to
-                determine whether to show UI for launching AR experiences.
-            """) // For details, see https://developer.apple.com/documentation/arkit
-        }
-        
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
         // Enable plane detection
@@ -243,15 +230,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
         
-        planeButton.isHidden = true
-        photoCaptureButotn.isHidden = true
-        tapRecognizer.isEnabled = false
-
-        // Adds pinch gesture to scale the node.
-        let pinchHandler = #selector(handlePinchGesture(recognizer:))
-        let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
-        self.view.addGestureRecognizer(pinchRecognizer)
-        
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
         notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
@@ -259,7 +237,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-           
+        
+        planeButton.isHidden = true
+        photoCaptureButotn.isHidden = true
+        tapRecognizer.isEnabled = false
+        
         if portal != nil {
             shouldDisableButtons(false)
         } else {
@@ -286,7 +268,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             stopRecording()
         }
         resetScene()
-        
         planeButton.isHidden = true
         photoCaptureButotn.isHidden = true
         tapRecognizer.isEnabled = false
@@ -358,7 +339,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         self.present(alert, animated: true, completion: nil)
     }
     
-    private var wasIntroduced = false
     
     // MARK: - ARSessionDelegate
     
@@ -386,14 +366,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-        
-//        if RPScreenRecorder.shared().isRecording {
-//            print(RPScreenRecorder.shared().isAvailable)
-//            print(RPScreenRecorder.shared().isRecording, "\n")
-//
-//        } else {
-//            stopRecording()
-//        }
        
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
@@ -434,14 +406,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
             print("\n ERROR - background is nil \n")
             return
         }
-        
-        if shouldSavePhoto {
-            let image = sceneView.snapshot()
-            presentPhotoVC(with: CIImage.init(image: image)!)
-
-//            presentPhotoVC(with: CIImage.init(cgImage: sceneView.scene.background.contents as! CGImage))
-        }
-
     }
     
     
@@ -514,24 +478,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
     
-    @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
-        switch recognizer.state {
-        case .changed, .ended:
-            
-            if isPortalVisible {
-                for child in sceneView.scene.rootNode.childNodes {
-                    if child.name == "portal" {
-                        child.scale.x *= Float(recognizer.scale)
-                        child.scale.y *= Float(recognizer.scale)
-                        recognizer.scale = 1
-                    }
-                }
-            }
-        default:
-            break
-        }
-    }
-    
     @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
         let touchPoint = recognizer.location(in: self.view)
         guard let hitPosition = getHitPoint(at: touchPoint) else { return }
@@ -564,13 +510,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         return hitPosition
     }
     
-    private func presentPhotoVC(with photo: CIImage) {
-        shouldSavePhoto = false
-        let photoViewController: PhotoViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
-        photoViewController.capturedCIImage = photo
-        self.navigationController?.present(photoViewController, animated: true, completion: nil)
-    }
-    
     private func showARPlanes(_ yes: Bool?) {
         for child in sceneView.scene.rootNode.childNodes {
             if child.name == "plane" {
@@ -589,11 +528,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, RP
         if yes {
             resetButton.isHidden = true
             filterButton.isHidden = true
-//            photoCaptureButotn.isHidden = true
         } else {
             resetButton.isHidden = false
             filterButton.isHidden = false
-//            photoCaptureButotn.isHidden = false
         }
     }
     
