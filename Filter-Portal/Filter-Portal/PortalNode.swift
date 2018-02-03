@@ -11,9 +11,9 @@ import SceneKit
 
 class PortalNode: SCNNode {
     
-    public static func setup(with size: CGSize) -> PortalNode {
+    public static func setup() -> PortalNode {
         
-        let portalPlane = SCNPlane(width: size.width, height: size.height)
+        let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
         material.transparency = 0.0
         material.isDoubleSided = true
@@ -33,15 +33,13 @@ class PortalNode: SCNNode {
         self.orientation = SCNVector4.init(0.0, orientation.y, 0.0, orientation.w)
     }
     
-    public func addFrame(of particlesIndex: Int, for portalSize: CGSize) {
-        
+    public func addFrame(of particlesIndex: Int) {
         if self.particleSystems != nil {
             self.removeAllParticleSystems()
         }
-        
-        guard let filterFrameName = FilterIdentification().frameName[particlesIndex] else { return }
-                
-        let emitter =  SCNParticleSystem.init(named: filterFrameName, inDirectory: nil)
+        guard let filterFrameName = FilterIdentification().frameName[particlesIndex], let particleEmitter = SCNParticleSystem.init(named: filterFrameName, inDirectory: nil) else {
+            return
+        }
         
         let path = UIBezierPath()
         path.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))
@@ -56,11 +54,8 @@ class PortalNode: SCNNode {
         path.addLine(to: CGPoint(x: -0.001-portalSize.width/2, y: -0.01-portalSize.height/2))
         path.addLine(to: CGPoint(x: 0-portalSize.width/2, y: -0.01-portalSize.height/2))
         path.close()
-
         let shape = SCNShape(path: path, extrusionDepth: 0)
-        
-        guard let particleEmitter = emitter else { return }
-        
+         
         particleEmitter.emitterShape = shape
         addParticleSystem(particleEmitter)
     }

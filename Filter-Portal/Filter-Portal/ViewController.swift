@@ -48,6 +48,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private var wasIntroduced = false
 
+    
+    
     // - Actions
     
     @IBAction func resetScene(_ sender: UIButton) {
@@ -61,14 +63,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             } else {
                 filterIndex = 0
             }
-            portal.addFrame(of: filterIndex, for: portalSize)
+            portal.addFrame(of: filterIndex)
         }
     }
     
     @IBAction func addPlane(_ sender: UIButton) {
         let midPoint = CGPoint(x: self.view.frame.size.width / 2, y: self.view.frame.size.height * 3 / 4)
-        guard let hitPoint = getHitPoint(at: midPoint) else { return }
-        spawnPortal(at: hitPoint)
+        guard let position = hitPosition(at: midPoint) else {
+            return
+        }
+        spawnPortal(at: position)
         shouldDisableButtons(false)
         showARPlanes()
     }
@@ -80,6 +84,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             stopRecording()
         }
     }
+    
+    
     
     // - View setup.
 
@@ -111,14 +117,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
         notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
+                
+        planeButton.isHidden = true
+        photoCaptureButotn.isHidden = true
+        tapRecognizer.isEnabled = false
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        planeButton.isHidden = true
-        photoCaptureButotn.isHidden = true
-        tapRecognizer.isEnabled = false
         
         if portal != nil {
             shouldDisableButtons(false)
@@ -375,7 +382,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @objc private func handleTapGesture(recognizer: UITapGestureRecognizer){
         let touchPoint = recognizer.location(in: self.view)
-        guard let hitPosition = getHitPoint(at: touchPoint) else { return }
+        guard let hitPosition = hitPosition(at: touchPoint) else { return }
         spawnPortal(at: hitPosition)
         shouldDisableButtons(false)
         showARPlanes()
@@ -386,22 +393,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             portalNode.removeFromParentNode()
             portal = nil
         }
-        
-        guard let cameraOrientation = cameraOrientation else { return }
-        portal = PortalNode.setup(with: portalSize)
-        
-        guard let portal = portal else { return }
-        portal.addFrame(of: filterIndex, for: portalSize)
+        portal = PortalNode.setup()
+        guard let cameraOrientation = cameraOrientation, let portal = portal else {
+            return
+        }
+        portal.addFrame(of: filterIndex)
         portal.updatePosition(to: position, with: cameraOrientation)
         sceneView.scene.rootNode.addChildNode(portal)
     }
 
-    private func getHitPoint(at point: CGPoint) -> SCNVector3? {
+    private func hitPosition(at point: CGPoint) -> SCNVector3? {
         let hits = sceneView.hitTest(point, types: .existingPlane)
-        
-        guard let firstHit = hits.first else { return nil }
-        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x, firstHit.worldTransform.columns.3.y + Float(portalSize.height * 1.5), firstHit.worldTransform.columns.3.z)
-        
+        guard let firstHit = hits.first else {
+            return nil
+        }
+        let hitPosition = SCNVector3Make(firstHit.worldTransform.columns.3.x,
+                                         firstHit.worldTransform.columns.3.y + Float(portalSize.height * 1.5),
+                                         firstHit.worldTransform.columns.3.z)
         return hitPosition
     }
     
@@ -448,10 +456,7 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
         }
         
         guard recorder.isAvailable else {
-            let alert = UIAlertController(title: "Oh noes!", message: "Screen recording is unavailable. Possible reasons: your device does not support it; you are displaying information over Airplay or through a TVOut session; another app is using the recorder right now. Please update your settings.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
-            self.present(alert, animated: true, completion: nil)
-            
+            showAlert(with: "Screen recording is unavailable. Possible reasons: your device does not support it; you are displaying information over Airplay or through a TVOut session; another app is using the recorder right now. Please update your settings.")
             return
         }
         
@@ -459,7 +464,7 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
             if let error = error as NSError? {
                 switch error.code {
                 case RPRecordingErrorCode.userDeclined.rawValue:
-                    self?.showAlert(with: "Video recording is impossible without screen recording.")
+                    return
                 default:
                     self?.showAlert(with: error.localizedDescription)
                 }
@@ -475,7 +480,6 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
     }
     
     func screenRecorder(_ screenRecorder: RPScreenRecorder, didStopRecordingWith previewViewController: RPPreviewViewController?, error: Error?) {
-        
         DispatchQueue.main.async { [weak self] in
             self?.isRecording = false
             self?.photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
@@ -485,8 +489,7 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
         if let error = error as NSError? {
             switch error.code {
             case RPRecordingErrorCode.userDeclined.rawValue:
-                let message = "Video recording is impossible without screen recording."
-                showAlert(with: message)
+                return
             case RPRecordingErrorCode.failedMediaServicesFailure.rawValue:
                 let message = "Highly recommend to restart your phone to be able to record the screen. Error: \(error.localizedDescription)"
                 showAlert(with: message)
@@ -499,8 +502,6 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
     
     func stopRecording() {
         let recorder = RPScreenRecorder.shared()
-        
-        // Do nothing if screen recording is not available
         guard recorder.isAvailable else {
             return
         }
@@ -509,7 +510,6 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
         isRecording = false
         
         recorder.stopRecording { [weak self] (preview, error) in
-            
             if let error = error as NSError? {
                 self?.showAlert(with: error.localizedDescription)
                 return
@@ -538,6 +538,7 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
             self?.present(alert, animated: true, completion: nil)
         }
     }
+    
     func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
         dismiss(animated: true)
     }
