@@ -69,9 +69,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBAction func addPlane(_ sender: UIButton) {
         let midPoint = CGPoint(x: self.view.frame.size.width / 2, y: self.view.frame.size.height * 3 / 4)
-        guard let position = hitPosition(at: midPoint) else {
-            return
-        }
+        guard let position = hitPosition(at: midPoint) else { return }
         spawnPortal(at: position)
         shouldDisableButtons(false)
         showARPlanes()
@@ -98,8 +96,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         configuration.planeDetection = .horizontal
         configuration.isLightEstimationEnabled = true
         // Run the view's session
-        sceneView.session.run(configuration)
-        
+//        sceneView.session.run(configuration)
+        sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+
         // Set a delegate to track the number of plane anchors for providing UI feedback.
         sceneView.session.delegate = self
         
@@ -117,11 +116,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
         notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
-                
+        
         planeButton.isHidden = true
         photoCaptureButotn.isHidden = true
         tapRecognizer.isEnabled = false
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -141,6 +139,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             stopRecording()
         }
     }
+    
     
     
     /// - Tag: UpdateARContent
@@ -200,14 +199,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         showARPlanes()
     }
-
-    private func showIntroductionAlert() {
-        wasIntroduced = true
-        let alert = UIAlertController(title: "Good job!", message: "Now tap the screen or the PLUS button to place the portal and have fun!", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
-
-        self.present(alert, animated: true, completion: nil)
-    }
+    
     
     
     // MARK: - ARSessionDelegate
@@ -240,19 +232,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
        
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
-            
-            // Calculates if portal node is in camera's frustum.
             guard let camera = sceneView.pointOfView else { return }
-            
+            // Calculates if portal node is in camera's frustum.
             isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
 
             var cropShape: UIBezierPath?
             
             if isPortalVisible {
-                cropShape = spacialArrangement.evaluateCropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
+                cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
                 guard let cropShape = cropShape else { return }
                 isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
-                
             }
             
             (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
@@ -266,16 +255,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         } else {
             let cgImage = convert(frameImage)
             sceneView.scene.background.contents = cgImage
-        }
-    
-        
-        //
-        // ADD ERROR MESSAGE WITH NOT BEING ABLE TO RENDER CONTENT
-        //
-        
-        guard sceneView.scene.background.contents != nil else {
-            print("\n ERROR - background is nil \n")
-            return
         }
     }
     
@@ -298,13 +277,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         sessionInfoLabel.text = "Session interruption ended"
         resetTracking()
-    }
-    
-
-    private func convert(_ ciImage: CIImage) -> CGImage? {
-        let frameCGImage = context.createCGImage(ciImage, from: ciImage.extent)
-        context.clearCaches()
-        return frameCGImage
     }
     
     private func updateSessionInfoLabel(for frame: ARFrame, trackingState: ARCamera.TrackingState) {
@@ -342,6 +314,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     // MARK: - Private methods
     
+    private func convert(_ ciImage: CIImage) -> CGImage? {
+        let frameCGImage = context.createCGImage(ciImage, from: ciImage.extent)
+        context.clearCaches()
+        return frameCGImage
+    }
+    
     private func resetTracking() {
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = .horizontal
@@ -362,6 +340,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let alert = UIAlertController(title: "Oh noes!", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
         present(alert, animated: true, completion: nil)
+    }
+    
+    private func showIntroductionAlert() {
+        wasIntroduced = true
+        let alert = UIAlertController(title: "Good job!", message: "Now tap the screen or the PLUS button to place the portal and have fun!", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
     }
     
     @objc func appResignsActive() {
@@ -439,11 +424,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         guard let camera = sceneView.pointOfView else { return nil }
         return camera.position
     }
+    
     private var cameraOrientation: SCNQuaternion? {
         guard let camera = sceneView.pointOfView else { return nil }
         return camera.orientation
     }
 }
+
 
 
 extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDelegate {
@@ -502,9 +489,7 @@ extension ViewController: RPPreviewViewControllerDelegate, RPScreenRecorderDeleg
     
     func stopRecording() {
         let recorder = RPScreenRecorder.shared()
-        guard recorder.isAvailable else {
-            return
-        }
+        guard recorder.isAvailable else { return }
         
         photoCaptureButotn.setImage(UIImage.init(named: "takephoto"), for: .normal)
         isRecording = false

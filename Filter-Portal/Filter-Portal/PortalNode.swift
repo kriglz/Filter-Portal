@@ -12,17 +12,14 @@ import SceneKit
 class PortalNode: SCNNode {
     
     public static func setup() -> PortalNode {
-        
         let portalPlane = SCNPlane(width: portalSize.width, height: portalSize.height)
         let material = SCNMaterial()
         material.transparency = 0.0
         material.isDoubleSided = true
         portalPlane.materials = [material]
-        
         let portal = PortalNode()
         portal.geometry = portalPlane
         portal.name = "portal"
-        
         return portal
     }
     

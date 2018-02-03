@@ -53,7 +53,7 @@ struct SpacialArrangement {
     }
     
     /// Returns portal projection `UIBezierPath` in camera captured image - crop shape. 
-    func evaluateCropShape(for portal: SCNNode, in cameraFrame: ARCamera, with imageSize: CGSize, at rootNode: SCNNode) -> UIBezierPath {
+    func cropShape(for portal: SCNNode, in cameraFrame: ARCamera, with imageSize: CGSize, at rootNode: SCNNode) -> UIBezierPath {
         
         // Composing too left and bottom right corners for the plane from given bounding box instance.
         let minLeftPoint = SCNVector3.init(portal.boundingBox.min.x, portal.boundingBox.max.y, 0)
