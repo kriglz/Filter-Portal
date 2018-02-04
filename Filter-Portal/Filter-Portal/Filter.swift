@@ -10,7 +10,6 @@ import UIKit
 import ARKit
 
 struct FilterIdentification {
-    
     let name: Dictionary<Int, String> = [
         0: "CIPhotoEffectNoir",
         1: "CIColorClamp",
@@ -29,14 +28,19 @@ struct FilterIdentification {
 }
 
 struct Filter {
-    
+    let context = CIContext()
+
     /// Applies selected filters to the portal / scene.
-    func apply(to frameImage: CIImage, withMaskOf cropShape: UIBezierPath?, using filterIndex: Int, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> CIImage {
+    func apply(to frameImage: CIImage,
+               withMaskOf cropShape: UIBezierPath?,
+               using filterIndex: Int,
+               _ didEnterPortal: Bool,
+               _ isPortalVisible: Bool,
+               _ isInFilteredSide: Bool,
+               _ isPortalFrameBiggerThanCameras: Bool) -> CIImage {
         
         let filterName = FilterIdentification().name[filterIndex]
-        
         if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
-
             // Adds additional conditions for some filters.
             if filterName == "CIColorClamp" {
                 ciFilter.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
@@ -53,7 +57,6 @@ struct Filter {
             
             // Portal frame is not bigger than camera's frame - portal edges are visible.
             if !didEnterPortal && isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
-                                
                 // Gets cropped image.
                 let croppedImage = applyMask(of: cropShape, for: frameImage)
 
@@ -84,7 +87,6 @@ struct Filter {
                 }
             }
         }
-        
         return frameImage
     }
     
@@ -97,8 +99,6 @@ struct Filter {
             return image
         }
     }
-    
-    let context = CIContext()
     
     /// Cropps image using custom shape.
     private func applyMask(of BezierPath: UIBezierPath, for image: CIImage) -> CIImage {
@@ -119,7 +119,6 @@ struct Filter {
         // Restore previous drawing context
         currentGraphicsContext.restoreGState()
         UIGraphicsEndImageContext()
-        
         context.clearCaches()
         
         return CIImage.init(image: maskedImage)!

@@ -105,7 +105,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         UIApplication.shared.isIdleTimerDisabled = true
         
         // Show debug UI to view performance metrics (e.g. frames per second).
-//        sceneView.showsStatistics = true
+        sceneView.showsStatistics = true
         sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         
         // Adds tap gesture recognizer to add portal to the scene.
@@ -227,38 +227,76 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         updateSessionInfoLabel(for: frame, trackingState: camera.trackingState)
     }
     
+    var shouldUpdateBackgroundPicture = false
+    var coloredImage = CIImage()
+    var finalImage = CIImage()
+    
+    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let frameImage = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
-       
+        
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
-            guard let camera = sceneView.pointOfView else { return }
-            // Calculates if portal node is in camera's frustum.
-            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
+//            guard let camera = sceneView.pointOfView else { return }
+//            // Calculates if portal node is in camera's frustum.
+//            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
+//
+//            var cropShape: UIBezierPath?
+//
+//            if isPortalVisible {
+//                cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
+//                guard let cropShape = cropShape else { return }
+//                isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
+//            }
+//
+//            (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+//
+//
+//            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+//
+//            let cgImage = convert(filteredCIImage)
+//            sceneView.scene.background.contents = cgImage
+            
 
-            var cropShape: UIBezierPath?
-            
-            if isPortalVisible {
-                cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
-                guard let cropShape = cropShape else { return }
-                isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
+            if !shouldUpdateBackgroundPicture {
+                let colorFilter = CIFilter(name: "CIColorClamp")
+                colorFilter?.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
+                colorFilter?.setValue(CIVector.init(x: 1, y: 0.4, z: 1, w: 1), forKeyPath: "inputMaxComponents")
+                colorFilter?.setValue(frameImage, forKey: kCIInputImageKey)
+                guard let resultColored = colorFilter?.outputImage else { return }
+                coloredImage = resultColored.cropped(to: resultColored.extent)
+                
+                sceneView.scene.background.contents = UIColor.black
+                shouldUpdateBackgroundPicture = true
+                portal.geometry?.material(named: "color")?.transparency = 1
+            } else {
+                let maskImage = CIImage(image: sceneView.snapshot())?.cropped(to: frameImage.extent)
+                let ciFilter = CIFilter(name: "CIMaskToAlpha")
+                ciFilter?.setValue(maskImage, forKey: kCIInputImageKey)
+                guard let resultMask = ciFilter?.outputImage else { return }
+                
+                let maskFilter = CIFilter(name: "CIBlendWithAlphaMask")
+                maskFilter?.setValue(coloredImage, forKey: kCIInputImageKey)
+                maskFilter?.setValue(resultMask, forKey: kCIInputMaskImageKey)
+                maskFilter?.setValue(frameImage, forKey: kCIInputBackgroundImageKey)
+                guard let finalResult = maskFilter?.outputImage else { return }
+                
+                imageVIew.isHidden = false
+                imageVIew.image = UIImage(ciImage: finalResult)
+                
+//                let cgImage = convert(initImage)
+//                sceneView.scene.background.contents = cgImage
+                portal.geometry?.material(named: "color")?.transparency = 0
+                shouldUpdateBackgroundPicture = false
             }
-            
-            (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
-            
-            
-            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
-            
-            let cgImage = convert(filteredCIImage)
-            sceneView.scene.background.contents = cgImage
-            
         } else {
             let cgImage = convert(frameImage)
             sceneView.scene.background.contents = cgImage
+            imageVIew.isHidden = true
         }
     }
     
-    
+    @IBOutlet weak var imageVIew: UIImageView!
     
     // MARK: - ARSessionObserver
     
@@ -382,7 +420,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         guard let cameraOrientation = cameraOrientation, let portal = portal else {
             return
         }
-        portal.addFrame(of: filterIndex)
+//        portal.addFrame(of: filterIndex)
         portal.updatePosition(to: position, with: cameraOrientation)
         sceneView.scene.rootNode.addChildNode(portal)
     }
