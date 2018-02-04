@@ -41,16 +41,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let context = CIContext()
     
-//    private var spacialArrangementConditions.isPortalFrameBiggerThanCameras = false
-//    private var spacialArrangementConditions.isInFilteredSide = false
-//    private var spacialArrangementConditions.isPortalVisible = true
-//    private var spacialArrangementConditions.didEnterPortal = false
-    
     private var isRecording = false
     
     private var wasIntroduced = false
 
-    var shouldUpdateBackgroundPicture = false
+    private var shouldUpdateBackgroundPicture = false
 
     
     
@@ -100,7 +95,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         configuration.planeDetection = .horizontal
         configuration.isLightEstimationEnabled = true
         // Run the view's session
-//        sceneView.session.run(configuration)
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
 
         // Set a delegate to track the number of plane anchors for providing UI feedback.
@@ -204,7 +198,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
          */
         plane.width = CGFloat(planeAnchor.extent.x)
         plane.height = CGFloat(planeAnchor.extent.z)
-        
         showARPlanes()
     }
     
@@ -265,6 +258,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 shouldUpdateBackgroundPicture = true
             }
         } else {
+            let cgImage = convert(frameImage)
+            sceneView.scene.background.contents = cgImage
+        }
+        
+        if sceneView.scene.background.contents == nil {
             let cgImage = convert(frameImage)
             sceneView.scene.background.contents = cgImage
         }
