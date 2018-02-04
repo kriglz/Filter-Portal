@@ -282,12 +282,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     func sessionWasInterrupted(_ session: ARSession) {
         // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        sessionInfoLabel.text = "Session was interrupted"
+        sessionInfoLabel.text = "Session was interrupted. Loading again..."
     }
     
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
-        sessionInfoLabel.text = "Session interruption ended"
+        sessionInfoLabel.text = "Session interruption ended. Loading again..."
         resetTracking()
     }
     
