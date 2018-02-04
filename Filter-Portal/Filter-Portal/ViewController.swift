@@ -184,8 +184,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Update content only for plane anchors and nodes matching the setup created in `renderer(_:didAdd:for:)`.
         guard let planeAnchor = anchor as?  ARPlaneAnchor,
             let planeNode = node.childNodes.first,
-            let plane = planeNode.geometry as? SCNPlane
-            else { return }
+            let plane = planeNode.geometry as? SCNPlane else { return }
         
         // Plane estimation may shift the center of a plane relative to its anchor's transform.
         planeNode.simdPosition = float3(planeAnchor.center.x, 0, planeAnchor.center.z)
@@ -235,53 +234,26 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Adds filters to the image only if portal has been created.
         if let portal = portal {
             if shouldUpdateBackgroundPicture {
+                guard let camera = sceneView.pointOfView else { return }
+                var cropShape: UIBezierPath?
 
-            guard let camera = sceneView.pointOfView else { return }
-            // Calculates if portal node is in camera's frustum.
-            isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
-
-            var cropShape: UIBezierPath?
-
-            if isPortalVisible {
-                cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
-                guard let cropShape = cropShape else { return }
-                isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
-            }
-
-            (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
-
-
-            let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
-
-            let cgImage = convert(filteredCIImage)
-            sceneView.scene.background.contents = cgImage
-            
-
-//            if shouldUpdateBackgroundPicture {
-//                let colorFilter = CIFilter(name: "CIColorClamp")
-//                colorFilter?.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
-//                colorFilter?.setValue(CIVector.init(x: 1, y: 0.4, z: 1, w: 1), forKeyPath: "inputMaxComponents")
-//                colorFilter?.setValue(frameImage, forKey: kCIInputImageKey)
-//                guard let resultColored = colorFilter?.outputImage else { return }
-//
-//                sceneView.scene.background.contents = UIColor.black
-//
-//                let maskImage = CIImage(image: sceneView.snapshot())!//?.cropped(to: frameImage.extent)
-//                let ciFilter = CIFilter(name: "CIMaskToAlpha")
-//                ciFilter?.setValue(maskImage, forKey: kCIInputImageKey)
-//                guard let resultMask = ciFilter?.outputImage else { return }
-//
-//                let maskFilter = CIFilter(name: "CIBlendWithAlphaMask")
-//                maskFilter?.setValue(resultColored, forKey: kCIInputImageKey)
-//                maskFilter?.setValue(resultMask, forKey: kCIInputMaskImageKey)
-//                maskFilter?.setValue(frameImage, forKey: kCIInputBackgroundImageKey)
-//                guard let finalResult = maskFilter?.outputImage else { return }
-//
-//                imageVIew.isHidden = false
-//                imageVIew.image = UIImage(ciImage: finalResult)
-
+                // Calculates if portal node is in camera's frustum.
+                isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
+                
+                if isPortalVisible {
+                    cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
+                    guard let cropShape = cropShape else { return }
+                    isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
+                }
+                
+                (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+                
+                let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+                
+                let cgImage = convert(filteredCIImage)
+                sceneView.scene.background.contents = cgImage
                 shouldUpdateBackgroundPicture = false
-
+                
             } else {
                 shouldUpdateBackgroundPicture = true
             }
@@ -319,7 +291,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         switch trackingState {
         case .normal where frame.anchors.isEmpty:
             // No planes detected; provide instructions for this app's AR interactions.
-            message = "Move the device around to detect horizontal surfaces 🤓"
+            message = "Move the device around to detect horizontal surfaces."
             resetScene()
             
         case .normal:
