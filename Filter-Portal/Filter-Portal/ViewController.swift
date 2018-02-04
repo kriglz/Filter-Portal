@@ -117,6 +117,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         tapRecognizer = UITapGestureRecognizer(target: self, action: tapHandler)
         self.view.addGestureRecognizer(tapRecognizer)
         
+        // Adds pinch gesture to scale the node.
+        let pinchHandler = #selector(handlePinchGesture(recognizer:))
+        let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: pinchHandler)
+        self.view.addGestureRecognizer(pinchRecognizer)
+        
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
         notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
@@ -380,6 +385,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         showARPlanes()
     }
    
+    @objc func handlePinchGesture(recognizer: UIPinchGestureRecognizer){
+        switch recognizer.state {
+        case .changed, .ended:
+            guard let portal = portal, spacialArrangementConditions.isPortalVisible else { return }
+            portal.scale.x *= Float(recognizer.scale)
+            portal.scale.y *= Float(recognizer.scale)
+            recognizer.scale = 1
+        default:
+            break
+        }
+    }
+    
     private func spawnPortal(at position: SCNVector3) {
         if let portalNode = portal {
             portalNode.removeFromParentNode()

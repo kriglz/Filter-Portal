@@ -32,7 +32,7 @@ struct SpacialArrangement {
 
     /// Decides if point of view is in filtered side or non filtered side.
     func inFilteredSide(_ portal: SCNNode, relativeTo cameraPoint: SCNNode, with conditions: Conditions) -> (isInFilteredSide: Bool, didEnterPortal: Bool) {
-                
+        
         guard !conditions.didEnterPortal else {
             if abs(cameraPoint.position.z - portal.position.z) > 0.2 {
                 return (conditions.isInFilteredSide, false)
@@ -70,7 +70,7 @@ struct SpacialArrangement {
         let projectionMax = getProjection(of: portal, for: portal.boundingBox.max, in: cameraFrame, with: imageSize, using: rootNode)
         
         /// Defines cropping shape, based on portal projection to the camera captured image.
-        let cropShape: UIBezierPath = makeCustomShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
+        let cropShape: UIBezierPath = customShapeOf(pointA: projectionMinLeft, pointB: projectionMax, pointC: projectionMaxRight, pointD: projectionMin, in: imageSize)
                 
         return cropShape
     }
@@ -84,42 +84,28 @@ struct SpacialArrangement {
     }
     
     /// Creates custom closed `UIBezierPath` for 4 points in selected size.
-    private func makeCustomShapeOf(pointA: CGPoint, pointB: CGPoint, pointC: CGPoint, pointD: CGPoint, in frame: CGSize) -> UIBezierPath {
+    private func customShapeOf(pointA: CGPoint,
+                               pointB: CGPoint,
+                               pointC: CGPoint,
+                               pointD: CGPoint,
+                               in frame: CGSize) -> UIBezierPath
+    {
         let path = UIBezierPath()
-//
-//                /// Mid point of AB line.
-//                let pointAB = CGPoint(x: CGFloat(simd_min(Float(pointA.x), Float(pointB.x))) + abs(pointA.x - pointB.x) / 2,
-//                                      y: CGFloat(simd_min(Float(pointA.y), Float(pointB.y))) + abs(pointA.y - pointB.y) / 2)
-//                /// Mid point of BC line.
-//                var pointBC = CGPoint(x: CGFloat(simd_min(Float(pointC.x), Float(pointB.x))) + abs(pointC.x - pointB.x) / 2,
-//                                      y: CGFloat(simd_min(Float(pointC.y), Float(pointB.y))) + abs(pointC.y - pointB.y) / 2)
-//        
-//                if pointBC.y < -200 {
-//                    pointBC.y = -200
-//                }
-//
-//                /// Mid point of CD line.
-//                let pointCD = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointC.x))) + abs(pointC.x - pointD.x) / 2,
-//                                      y: CGFloat(simd_min(Float(pointD.y), Float(pointC.y))) + abs(pointC.y - pointD.y) / 2)
-//                /// Mid point of DA line.
-//                var pointDA = CGPoint(x: CGFloat(simd_min(Float(pointD.x), Float(pointA.x))) + abs(pointD.x - pointA.x) / 2,
-//                                      y: CGFloat(simd_min(Float(pointD.y), Float(pointA.y))) + abs(pointD.y - pointA.y) / 2)
-//
-//                if pointDA.y < -200 {
-//                    pointDA.y = -200
-//                }
-//
-//                path.move(to: pointAB)
-//                path.addQuadCurve(to: pointBC, controlPoint: pointB)
-//                path.addQuadCurve(to: pointCD, controlPoint: pointC)
-//                path.addQuadCurve(to: pointDA, controlPoint: pointD)
-//                path.addQuadCurve(to: pointAB, controlPoint: pointA)
         
-
-        path.move(to: pointA)
-        path.addLine(to: pointB)
-        path.addLine(to: pointC)
-        path.addLine(to: pointD)
+        let controlRect = CGRect(origin: CGPoint.zero, size: frame)
+        
+        if pointC.y < frame.height, pointD.y < frame.height, !controlRect.contains(pointA), !controlRect.contains(pointB), !controlRect.contains(pointC), !controlRect.contains(pointD) {
+                path.move(to: CGPoint(x: 0, y: 0))
+                path.addLine(to: CGPoint(x: frame.width, y: 0))
+                path.addLine(to: CGPoint(x: pointC.x, y: pointC.y))
+                path.addLine(to: CGPoint(x: pointD.x, y: pointD.y))
+            
+        } else {
+            path.move(to: pointA)
+            path.addLine(to: pointB)
+            path.addLine(to: pointC)
+            path.addLine(to: pointD)
+        }
         
         path.close()
         return path
