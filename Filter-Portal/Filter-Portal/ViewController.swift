@@ -291,7 +291,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         }
     }
     
-    @IBOutlet weak var imageVIew: UIImageView!
+
     
     // MARK: - ARSessionObserver
     

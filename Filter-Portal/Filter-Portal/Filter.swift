@@ -104,7 +104,7 @@ struct Filter {
     private func applyMask(of BezierPath: UIBezierPath, for image: CIImage) -> CIImage {
         // Define graphic context (canvas) to paint on
         UIGraphicsBeginImageContext(image.extent.size)
-        let currentGraphicsContext = UIGraphicsGetCurrentContext()!
+        guard let currentGraphicsContext = UIGraphicsGetCurrentContext() else { return image }
         currentGraphicsContext.saveGState()
         
         // Flips image upside down to match `UIGraphicsGetCurrentContext`.
@@ -112,15 +112,15 @@ struct Filter {
         
         // Set the clipping mask
         BezierPath.addClip()
-        let cgImage = context.createCGImage(transformedImage, from: image.extent)!
+        guard let cgImage = context.createCGImage(transformedImage, from: image.extent) else { return image }
         currentGraphicsContext.draw(cgImage, in: image.extent)
-        let maskedImage = UIGraphicsGetImageFromCurrentImageContext()!
+        guard let maskedImage = UIGraphicsGetImageFromCurrentImageContext() else { return image }
         
         // Restore previous drawing context
         currentGraphicsContext.restoreGState()
         UIGraphicsEndImageContext()
         context.clearCaches()
         
-        return CIImage.init(image: maskedImage)!
+        return CIImage.init(image: maskedImage) ?? image
     }
 }
