@@ -34,60 +34,48 @@ struct Filter {
     func apply(to frameImage: CIImage,
                withMaskOf cropShape: UIBezierPath?,
                using filterIndex: Int,
-               _ didEnterPortal: Bool,
-               _ isPortalVisible: Bool,
-               _ isInFilteredSide: Bool,
-               _ isPortalFrameBiggerThanCameras: Bool) -> CIImage {
-        
+               _ conditions: Conditions) -> CIImage
+    {
         let filterName = FilterIdentification().name[filterIndex]
-        if let filterName = filterName, let ciFilter = CIFilter(name: filterName){
-            // Adds additional conditions for some filters.
-            if filterName == "CIColorClamp" {
-                ciFilter.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
-                ciFilter.setValue(CIVector.init(x: 1, y: 0.4, z: 1, w: 1), forKeyPath: "inputMaxComponents")
+        guard let filterNamed = filterName, let ciFilter = CIFilter(name: filterNamed) else { return frameImage }
+        
+        // Adds additional conditions for the pink filter.
+        if filterNamed == "CIColorClamp" {
+            ciFilter.setValue(CIVector.init(x: 0.4, y: 0.2, z: 0.4, w: 0), forKeyPath: "inputMinComponents")
+            ciFilter.setValue(CIVector.init(x: 1, y: 0.4, z: 1, w: 1), forKeyPath: "inputMaxComponents")
+        }
+        
+        // Portal frame is not bigger than camera's frame - portal edges are visible.
+        if !conditions.didEnterPortal && conditions.isPortalVisible && !conditions.isPortalFrameBiggerThanCameras, let cropShape = cropShape {
+            // Gets cropped image.
+            let croppedImage = applyMask(of: cropShape, for: frameImage)
+            
+            // If camera is in non filtered side - looking to portal from outside.
+            if !conditions.isInFilteredSide {
+                let filteredImage = filtered(croppedImage, with: ciFilter)
+                return filteredImage.composited(over: frameImage)
+                
+                // If camera is in filtered side, inside portal.
+            } else {
+                let filteredImage = filtered(frameImage, with: ciFilter)
+                return croppedImage.composited(over: filteredImage)
             }
             
-            //                CILineOverlay filter properties:
-            //                ciFilter.setValue(1.0, forKey: kCIInputContrastKey)
-            //                ciFilter.setValue(0.2, forKey: "inputThreshold")
-            //                ciFilter.setValue(1, forKey: "inputEdgeIntensity")
-            //                ciFilter.setValue(0.6, forKey: "inputNRSharpness")
-            //                ciFilter.setValue(0.02, forKey: "inputNRNoiseLevel")
-          
-            
-            // Portal frame is not bigger than camera's frame - portal edges are visible.
-            if !didEnterPortal && isPortalVisible && !isPortalFrameBiggerThanCameras, let cropShape = cropShape {
-                // Gets cropped image.
-                let croppedImage = applyMask(of: cropShape, for: frameImage)
-
-                // If camera is in non filtered side - looking to portal from outside.
-                if !isInFilteredSide {
-                    let filteredImage = filtered(croppedImage, with: ciFilter)
-                    return filteredImage.composited(over: frameImage)
-                    
-                // If camera is in filtered side, inside portal.
-                } else {
-                    let filteredImage = filtered(frameImage, with: ciFilter)
-                    return croppedImage.composited(over: filteredImage)
-                }
-                
             // Portal frame is bigger than camera's frame - portal edges are not visible or portal is not in frame at all.
-            } else if isPortalVisible && isPortalFrameBiggerThanCameras && !didEnterPortal {
-                if !isInFilteredSide {
-                    return filtered(frameImage, with: ciFilter)
-                } else {
-                    return frameImage
-                }
-                
+        } else if conditions.isPortalVisible && conditions.isPortalFrameBiggerThanCameras && !conditions.didEnterPortal {
+            if !conditions.isInFilteredSide {
+                return filtered(frameImage, with: ciFilter)
             } else {
-                if !isInFilteredSide {
-                   return frameImage
-                } else {
-                    return filtered(frameImage, with: ciFilter)
-                }
+                return frameImage
+            }
+            
+        } else {
+            if !conditions.isInFilteredSide {
+                return frameImage
+            } else {
+                return filtered(frameImage, with: ciFilter)
             }
         }
-        return frameImage
     }
     
     /// Applies CI Filter to the CI image.

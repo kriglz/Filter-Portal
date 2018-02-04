@@ -37,12 +37,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let spacialArrangement = SpacialArrangement()
     
+    private let spacialArrangementConditions = Conditions()
+    
     private let context = CIContext()
     
-    private var isPortalFrameBiggerThanCameras = false
-    private var isInFilteredSide = false
-    private var isPortalVisible = true
-    private var didEnterPortal = false
+//    private var spacialArrangementConditions.isPortalFrameBiggerThanCameras = false
+//    private var spacialArrangementConditions.isInFilteredSide = false
+//    private var spacialArrangementConditions.isPortalVisible = true
+//    private var spacialArrangementConditions.didEnterPortal = false
     
     private var isRecording = false
     
@@ -238,17 +240,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 var cropShape: UIBezierPath?
 
                 // Calculates if portal node is in camera's frustum.
-                isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
+                spacialArrangementConditions.isPortalVisible = sceneView.isNode(portal, insideFrustumOf: camera)
                 
-                if isPortalVisible {
+                if spacialArrangementConditions.isPortalVisible {
                     cropShape = spacialArrangement.cropShape(for: portal, in: frame.camera, with: frameImage.extent.size, at: sceneView.scene.rootNode)
                     guard let cropShape = cropShape else { return }
-                    isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
+                    spacialArrangementConditions.isPortalFrameBiggerThanCameras = spacialArrangement.compare(cropShape, with: frameImage.extent)
                 }
                 
-                (isInFilteredSide, didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+                (spacialArrangementConditions.isInFilteredSide, spacialArrangementConditions.didEnterPortal) = spacialArrangement.inFilteredSide(portal, relativeTo: camera, with: spacialArrangementConditions)
                 
-                let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, didEnterPortal, isPortalVisible, isInFilteredSide, isPortalFrameBiggerThanCameras)
+                let filteredCIImage = filter.apply(to: frameImage, withMaskOf: cropShape, using: filterIndex, spacialArrangementConditions)
                 
                 let cgImage = convert(filteredCIImage)
                 sceneView.scene.background.contents = cgImage
@@ -336,8 +338,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             portalNode.removeFromParentNode()
             portal = nil
         }
-        isInFilteredSide = false
-        didEnterPortal = false
+        spacialArrangementConditions.isInFilteredSide = false
+        spacialArrangementConditions.didEnterPortal = false
         shouldDisableButtons(true)
     }
     

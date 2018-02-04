@@ -26,7 +26,6 @@ class PortalNode: SCNNode {
     
     public func updatePosition(to position: SCNVector3, with orientation: SCNQuaternion) {
         self.position = position
-        
         // Set plane position to face the camera.
         self.orientation = SCNVector4.init(0.0, orientation.y, 0.0, orientation.w)
     }
@@ -35,9 +34,8 @@ class PortalNode: SCNNode {
         if self.particleSystems != nil {
             self.removeAllParticleSystems()
         }
-        guard let filterFrameName = FilterIdentification().frameName[particlesIndex], let particleEmitter = SCNParticleSystem.init(named: filterFrameName, inDirectory: nil) else {
-            return
-        }
+        guard let filterFrameName = FilterIdentification().frameName[particlesIndex],
+            let particleEmitter = SCNParticleSystem.init(named: filterFrameName, inDirectory: nil) else { return }
         
         let path = UIBezierPath()
         path.move(to: CGPoint(x: 0-portalSize.width/2, y: 0-portalSize.height/2))

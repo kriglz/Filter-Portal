@@ -8,6 +8,13 @@
 
 import ARKit
 
+class Conditions {
+    var didEnterPortal: Bool = false
+    var isPortalVisible : Bool = false
+    var isInFilteredSide: Bool = false
+    var isPortalFrameBiggerThanCameras: Bool = false
+}
+
 struct SpacialArrangement {
     
     /// Evaluates relative size of portal to visible scene.
@@ -24,30 +31,27 @@ struct SpacialArrangement {
     }
 
     /// Decides if point of view is in filtered side or non filtered side.
-    func inFilteredSide(_ portal: SCNNode, relativeTo cameraPoint: SCNNode, _ didEnterPortal: Bool, _ isPortalVisible: Bool, _ isInFilteredSide: Bool, _ isPortalFrameBiggerThanCameras: Bool) -> (Bool, Bool) {
-        
-//        var didEnter: Bool = true
-        
-        guard !didEnterPortal else {
+    func inFilteredSide(_ portal: SCNNode, relativeTo cameraPoint: SCNNode, with conditions: Conditions) -> (isInFilteredSide: Bool, didEnterPortal: Bool) {
+                
+        guard !conditions.didEnterPortal else {
             if abs(cameraPoint.position.z - portal.position.z) > 0.2 {
-                return (isInFilteredSide, false)
-                //didEnter = false
+                return (conditions.isInFilteredSide, false)
             }
-            return (isInFilteredSide, true)
+            return (conditions.isInFilteredSide, true)
         }
         
-        if !isInFilteredSide {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                return (!isInFilteredSide, true)
+        if !conditions.isInFilteredSide {
+            if conditions.isPortalVisible && conditions.isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                return (!conditions.isInFilteredSide, true)
             } else {
-                return (isInFilteredSide, false)
+                return (conditions.isInFilteredSide, false)
             }
             
         } else {
-            if isPortalVisible && isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
-                return (!isInFilteredSide, true)
+            if conditions.isPortalVisible && conditions.isPortalFrameBiggerThanCameras && abs(cameraPoint.position.z - portal.position.z) < 0.1 {
+                return (!conditions.isInFilteredSide, true)
             } else {
-                return (isInFilteredSide, false)
+                return (conditions.isInFilteredSide, false)
             }
         }
     }
