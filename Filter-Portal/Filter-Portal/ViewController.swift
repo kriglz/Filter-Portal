@@ -10,6 +10,7 @@ import UIKit
 import SceneKit
 import ARKit
 import ReplayKit
+import AVFoundation
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
@@ -88,18 +89,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+  
+        planeButton.isHidden = true
+        photoCaptureButotn.isHidden = true
+        tapRecognizer.isEnabled = false
+        sessionInfoView.isHidden = true
+
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
+        
         // Enable plane detection
         configuration.planeDetection = .horizontal
         configuration.isLightEstimationEnabled = true
         // Run the view's session
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
-
         // Set a delegate to track the number of plane anchors for providing UI feedback.
         sceneView.session.delegate = self
-        
+
         UIApplication.shared.isIdleTimerDisabled = true
         
         // Show debug UI to view performance metrics (e.g. frames per second).
@@ -119,10 +125,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appMovedToBackground), name: Notification.Name.UIApplicationDidEnterBackground, object: nil)
         notificationCenter.addObserver(self, selector: #selector(appResignsActive), name: Notification.Name.UIApplicationWillResignActive, object: nil)
-        
-        planeButton.isHidden = true
-        photoCaptureButotn.isHidden = true
-        tapRecognizer.isEnabled = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -273,8 +275,36 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     // MARK: - ARSessionObserver
     
     func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        sessionInfoLabel.text = "Session failed: \(error.localizedDescription)"
+        let error = error as NSError
+        
+        switch error.code {
+        case ARError.Code.cameraUnauthorized.rawValue:
+            sessionInfoView.isHidden = true
+            sessionInfoLabel.text = ""
+            
+            let alert = UIAlertController(title: "Camera Access ", message: "You need to enable Camera Access to use this App. Please update camera settings.", preferredStyle: .alert)
+            
+            let settingsAction = UIAlertAction(title: "Enable camera access",
+                                               style: .default,
+                                               handler:
+                { (action: UIAlertAction) in
+                    guard let settingsURL = URL.init(string: UIApplicationOpenSettingsURLString) else { return }
+                    if UIApplication.shared.canOpenURL(settingsURL) {
+                        UIApplication.shared.open(settingsURL, completionHandler: { (success) in
+                            print("settings opend \(success)")
+                        })
+                    }
+            })
+            
+            alert.addAction(settingsAction)
+//            alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+
+            present(alert, animated: true, completion: nil)
+        default:
+            // Present an error message to the user
+            sessionInfoLabel.text = "Session failed: \(error.localizedDescription)"
+        }
+
         resetTracking()
     }
     
