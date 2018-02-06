@@ -17,13 +17,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.006</string>
+	<string>1.007</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This application will use the camera for Augmented Reality.</string>
+	<string>This application uses camera to create augmented reality experience.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app will use Photo Library to save your taken photos.</string>
 	<key>UILaunchStoryboardName</key>

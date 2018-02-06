@@ -295,10 +295,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                         })
                     }
             })
-            
             alert.addAction(settingsAction)
-//            alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
-
             present(alert, animated: true, completion: nil)
         default:
             // Present an error message to the user
